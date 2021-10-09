@@ -25,6 +25,7 @@ class Player
 {
     public:
         glm::vec3 pos;
+        glm::vec3 fwd;
 };
 
 int main(void)
@@ -46,6 +47,7 @@ int main(void)
 
     Player player;
     player.pos = glm::vec3(0.0f, 0.0f, -3.0f);
+    player.fwd = glm::vec3(0.0f, 0.0f, -1.0f);
 
     Model cube_model;
     Model cube2;
@@ -77,25 +79,36 @@ int main(void)
 
     uint16_t perspective_normalization_scale = float_to_fixed(get_persp_norm_scale(near_plane, far_plane), 16);
 
+    glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, 3.0f, -3.0f);
     struct controller_data data;
     while(1)
     {
         controller_read(&data);
+        glm::vec3 cam_fwd = camera_pos - player.pos;
+        cam_fwd.y = 0;
+        cam_fwd = glm::normalize(cam_fwd);
+        glm::vec3 cam_right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam_fwd));
 
-        glm::vec3 analog = glm::vec3((float)data.c[0].x / 1024.0f,0, -(float)data.c[0].y / 1024.0f);
+        float right_value = (float)data.c[0].x / 1024.0f;
+        float fwd_value = -(float)data.c[0].y / 1024.0f;
+        glm::vec3 analog = fwd_value*cam_fwd + right_value*cam_right; 
         glm::vec3 analog_dir = glm::normalize(analog);
 
         if(glm::length(analog) > 0.01f)
         {
             float yaw = glm::degrees(atan(-analog_dir.z / analog_dir.x));
 
+            player.fwd = analog_dir;
             player.pos += analog;
             cube_model.rotation.y = yaw;
         }
 
+        glm::vec3 new_cam_pos = player.pos - (5.0f*player.fwd + glm::vec3(0.0f, 2.0f, 0.0f));
+
+        camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
         cube_model.position = player.pos;
 
-        glm::mat4 view_mat = glm::translate(glm::mat4(1.0f), -1.0f*(player.pos - glm::vec3(0, 2.0f, -5.0f)));
+        glm::mat4 view_mat = glm::lookAt(camera_pos, player.pos, glm::vec3(0.0f, 1.0f, 0.0f));;
         glm::mat4 pv = mat * view_mat;
         ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
         data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
