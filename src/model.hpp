@@ -13,6 +13,7 @@ public:
     size_t commands_size;
     uint32_t num_commands;
     glm::vec3 position;
+    glm::vec3 rotation;
     ugfx_matrix_t matrix;
 
     void initalize();

@@ -1,5 +1,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include "model.hpp"
 
 void Model::initalize()
@@ -12,6 +13,7 @@ void Model::initalize()
 void Model::draw(UgfxCommandBuffer &command_queue)
 {
     glm::mat4 model_mat = glm::translate(glm::mat4(1.0f), this->position);
+    model_mat = model_mat * glm::yawPitchRoll(glm::radians(rotation.y), glm::radians(rotation.x), glm::radians(rotation.z));
     ugfx_matrix_from_column_major(&this->matrix, &model_mat[0][0]);
     data_cache_hit_writeback(&this->matrix, sizeof(this->matrix));
 

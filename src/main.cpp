@@ -45,6 +45,7 @@ int main(void)
     cube_model.verts_size = mesh_vertices_length; 
 
     cube_model.position = glm::vec3(0.0f, 0.0f, -3.0f);
+    cube_model.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
     cube_model.initalize();
 
@@ -108,5 +109,7 @@ int main(void)
         rsp_run();
 
         display_show(disp);
+
+        cube_model.rotation.y += 1;
     }
 }
