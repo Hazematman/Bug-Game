@@ -21,6 +21,12 @@ UgfxCommandBuffer disp_commands(UGFX_CMDBUF_SIZE);
 
 uint8_t depth_buffer[DISPLAY_WIDTH*DISPLAY_HEIGHT*2] __attribute__ ((aligned (64)));
 
+class Player
+{
+    public:
+        glm::vec3 pos;
+};
+
 int main(void)
 {
     init_interrupts();
@@ -29,6 +35,7 @@ int main(void)
     debug_init_isviewer();
 
     /* Initalize basics */
+    controller_init();
     display_init(res, bit, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE_FETCH_ALWAYS);
     ugfx_init(UGFX_DEFAULT_RDP_BUFFER_SIZE);
     dfs_init(DFS_DEFAULT_LOCATION);
@@ -37,7 +44,11 @@ int main(void)
     ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     data_cache_hit_writeback(&viewport, sizeof(viewport));
 
+    Player player;
+    player.pos = glm::vec3(0.0f, 0.0f, -3.0f);
+
     Model cube_model;
+    Model cube2;
 
     cube_model.verts = mesh_vertices;
     cube_model.commands = mesh_commands;
@@ -47,20 +58,39 @@ int main(void)
     cube_model.position = glm::vec3(0.0f, 0.0f, -3.0f);
     cube_model.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
+    cube2.verts = mesh_vertices;
+    cube2.commands = mesh_commands;
+    cube2.commands_size = mesh_commands_length;
+    cube2.verts_size = mesh_vertices_length; 
+
+    cube2.position = glm::vec3(0.0f, 0.0f, -3.0f);
+    cube2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+
     cube_model.initalize();
+    cube2.initalize();
 
     float near_plane = 0.1f;
     float far_plane = 100.0f;
 
     ugfx_matrix_t pv_matrix;
     auto mat = glm::perspective(glm::radians(90.0f), 320.0f/240.0f, near_plane, far_plane);
-    ugfx_matrix_from_column_major(&pv_matrix, &mat[0][0]);
-    data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
 
     uint16_t perspective_normalization_scale = float_to_fixed(get_persp_norm_scale(near_plane, far_plane), 16);
 
+    struct controller_data data;
     while(1)
     {
+        controller_read(&data);
+
+        player.pos += glm::vec3((float)data.c[0].x / 1024.0f,0, -(float)data.c[0].y / 1024.0f);
+        cube_model.position = player.pos;
+
+        glm::mat4 view_mat = glm::translate(glm::mat4(1.0f), -1.0f*(player.pos - glm::vec3(0, 2.0f, -5.0f)));
+        glm::mat4 pv = mat * view_mat;
+        ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
+        data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
+
+
         while( !(disp = display_lock()) );
 
         disp_commands.clear();
@@ -97,6 +127,10 @@ int main(void)
 
         cube_model.draw(disp_commands);
 
+        disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(0, 255, 0, 255)));
+
+        cube2.draw(disp_commands);
+
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());
 
@@ -109,7 +143,5 @@ int main(void)
         rsp_run();
 
         display_show(disp);
-
-        cube_model.rotation.y += 1;
     }
 }
