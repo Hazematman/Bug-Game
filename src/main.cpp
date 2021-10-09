@@ -82,7 +82,17 @@ int main(void)
     {
         controller_read(&data);
 
-        player.pos += glm::vec3((float)data.c[0].x / 1024.0f,0, -(float)data.c[0].y / 1024.0f);
+        glm::vec3 analog = glm::vec3((float)data.c[0].x / 1024.0f,0, -(float)data.c[0].y / 1024.0f);
+        glm::vec3 analog_dir = glm::normalize(analog);
+
+        if(glm::length(analog) > 0.01f)
+        {
+            float yaw = glm::degrees(atan(-analog_dir.z / analog_dir.x));
+
+            player.pos += analog;
+            cube_model.rotation.y = yaw;
+        }
+
         cube_model.position = player.pos;
 
         glm::mat4 view_mat = glm::translate(glm::mat4(1.0f), -1.0f*(player.pos - glm::vec3(0, 2.0f, -5.0f)));
@@ -120,7 +130,7 @@ int main(void)
                 UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_PRIM_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1,
                 UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_PRIM_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1
                 ));
-        disp_commands.push_back(ugfx_set_cull_mode(UGFX_CULL_BACK));
+        disp_commands.push_back(ugfx_set_cull_mode(UGFX_CULL_FRONT));
         disp_commands.push_back(ugfx_set_geometry_mode( UGFX_GEOMETRY_SHADE | UGFX_GEOMETRY_ZBUFFER | UGFX_GEOMETRY_SMOOTH));
         disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(255, 0, 0, 255)));
         disp_commands.push_back(ugfx_set_clip_ratio(2));
