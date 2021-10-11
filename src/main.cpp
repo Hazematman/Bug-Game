@@ -13,6 +13,8 @@
 #include "cube.hpp"
 #include "model.hpp"
 
+#include "test_level.hpp"
+
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
 
@@ -202,7 +204,7 @@ int main(void)
     cube2.initalize();
 
     float near_plane = 0.1f;
-    float far_plane = 100.0f;
+    float far_plane = 1000.0f;
 
     ugfx_matrix_t pv_matrix;
     auto mat = glm::perspective(glm::radians(90.0f), 320.0f/240.0f, near_plane, far_plane);
@@ -247,9 +249,11 @@ int main(void)
             character->setLinearVelocity(10.0f*btVector3(analog_dir.x, analog_dir.y, analog_dir.z));
             character->clearForces();
             cube_model.rotation.y = yaw;
+#if 0
             character->rot = btQuaternion(glm::radians(cube_model.rotation.y), 
                                      glm::radians(cube_model.rotation.z),
                                      glm::radians(cube_model.rotation.x));
+#endif
         }
         else
         {
@@ -267,16 +271,21 @@ int main(void)
         ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
         data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
 
+        glm::mat4 level_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f));
+        ugfx_matrix_t level_mat_u;
+        ugfx_matrix_from_column_major(&level_mat_u, &level_mat[0][0]);
+        data_cache_hit_writeback(&level_mat_u, sizeof(level_mat_u));
+
 
         while( !(disp = display_lock()) );
 
         disp_commands.clear();
 
-        disp_commands.push_back(ugfx_set_scissor(0,0, DISPLAY_WIDTH << 2, DISPLAY_HEIGHT << 2, UGFX_SCISSOR_DEFAULT));
+        disp_commands.push_back(ugfx_set_scissor(0,0, (DISPLAY_WIDTH-1) << 2, (DISPLAY_HEIGHT-1) << 2, UGFX_SCISSOR_DEFAULT));
         disp_commands.push_back(ugfx_load_viewport(0, &viewport));
-        disp_commands.push_back(ugfx_set_z_image(depth_buffer));
+        disp_commands.push_back(ugfx_set_z_image(0, depth_buffer));
         disp_commands.push_back(ugfx_set_other_modes(UGFX_CYCLE_FILL));
-        disp_commands.push_back(ugfx_set_color_image(depth_buffer, UGFX_FORMAT_RGBA, UGFX_PIXEL_SIZE_16B, DISPLAY_WIDTH-1));
+        disp_commands.push_back(ugfx_set_color_image(0, depth_buffer, UGFX_FORMAT_RGBA, UGFX_PIXEL_SIZE_16B, DISPLAY_WIDTH-1));
         disp_commands.push_back(ugfx_set_fill_color(PACK_ZDZx2(0xFFFF, 0)));
         disp_commands.push_back(ugfx_fill_rectangle(0, 0, DISPLAY_WIDTH << 2, DISPLAY_HEIGHT << 2));
 
@@ -297,7 +306,7 @@ int main(void)
                 UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_PRIM_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1,
                 UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_PRIM_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1
                 ));
-        disp_commands.push_back(ugfx_set_cull_mode(UGFX_CULL_FRONT));
+        disp_commands.push_back(ugfx_set_cull_mode(UGFX_CULL_BACK));
         disp_commands.push_back(ugfx_set_geometry_mode( UGFX_GEOMETRY_SHADE | UGFX_GEOMETRY_ZBUFFER | UGFX_GEOMETRY_SMOOTH));
         disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(255, 0, 0, 255)));
         disp_commands.push_back(ugfx_set_clip_ratio(2));
@@ -307,6 +316,9 @@ int main(void)
         disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(0, 255, 0, 255)));
 
         cube2.draw(disp_commands);
+
+        disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
+        disp_commands.push_back(ugfx_push_commands(0, test_level_commands, test_level_commands_length));
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());

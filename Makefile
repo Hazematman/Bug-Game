@@ -12,6 +12,7 @@ $(ROMNAME).z64: LDFLAGS=-L$(N64_ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldrago
 all: $(ROMNAME).z64
 
 $(BUILD_DIR)/$(ROMNAME).elf: \
+	$(BUILD_DIR)/test_level.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \
 
