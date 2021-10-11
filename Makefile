@@ -4,10 +4,10 @@ include $(N64_INST)/include/n64.mk
 
 ROMNAME=ultrabrew
 
-$(ROMNAME).z64: CXXFLAGS+=-std=c++14
+$(ROMNAME).z64: CXXFLAGS+=-std=c++14 -I$(N64_ROOTDIR)/mips64-elf/include/bullet
 $(ROMNAME).z64: MAPCMD=-Wl,-Map
 $(ROMNAME).z64: LD=$(N64_CXX)
-$(ROMNAME).z64: LDFLAGS=-L$(N64_ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldragonsys -Wl,-Tn64.ld -Wl,--gc-sections
+$(ROMNAME).z64: LDFLAGS=-L$(N64_ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldragonsys -Wl,--start-group -lBullet3Common -lBulletDynamics -lBulletCollision -lBulletInverseDynamics -lBulletSoftBody -lLinearMath -Wl,--end-group -Wl,-Tn64.ld -Wl,--gc-sections
 
 all: $(ROMNAME).z64
 

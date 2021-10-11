@@ -6,6 +6,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <bullet/btBulletDynamicsCommon.h>
+#include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
+#include <bullet/BulletCollision/CollisionDispatch/btGhostObject.h>
+
 #include "cube.hpp"
 #include "model.hpp"
 
@@ -28,6 +32,33 @@ class Player
         glm::vec3 fwd;
 };
 
+
+void my_ugfx_viewport_init(ugfx_viewport_t *viewport, int16_t left, int16_t top, int16_t right, int16_t bottom)
+{
+    left = left << 2;
+    top = top << 2;
+    right = right << 2;
+    bottom = bottom << 2;
+
+    int16_t half_width = (right - left) / 2;
+    int16_t half_height = (bottom - top) / 2;
+
+    *viewport = (ugfx_viewport_t) {
+        .scale = { 
+            half_width,
+            (int16_t)(-half_height),
+            Z_MAX / 2,
+            0
+        },
+        .offset = { 
+            (int16_t)(left + half_width),
+            (int16_t)(bottom - half_height),
+            Z_MAX / 2,
+            0 
+        }
+    };
+}
+
 int main(void)
 {
     init_interrupts();
@@ -41,13 +72,112 @@ int main(void)
     ugfx_init(UGFX_DEFAULT_RDP_BUFFER_SIZE);
     dfs_init(DFS_DEFAULT_LOCATION);
 
+    /* Force flashing of denomralized numbers */
+    uint32_t fcr31 = C1_FCR31();
+    fcr31 |= (1<<24);
+    C1_WRITE_FCR31(fcr31);
+
     ugfx_viewport_t viewport;
-    ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+    my_ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     data_cache_hit_writeback(&viewport, sizeof(viewport));
+
+    /* Initalize bullet physics stuff */
+    btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+    btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
+    btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
+    btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
+
+	btAlignedObjectArray<btCollisionShape*> collisionShapes;
+    dynamicsWorld->setGravity(btVector3(0, -10, 0));
+
+	{
+		btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
+
+		collisionShapes.push_back(groundShape);
+
+		btTransform groundTransform;
+		groundTransform.setIdentity();
+		groundTransform.setOrigin(btVector3(0, -51, 0));
+
+		btScalar mass(0.);
+
+		//rigidbody is dynamic if and only if mass is non zero, otherwise static
+		bool isDynamic = (mass != 0.f);
+
+		btVector3 localInertia(0, 0, 0);
+		if (isDynamic)
+			groundShape->calculateLocalInertia(mass, localInertia);
+
+		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
+		btRigidBody* body = new btRigidBody(rbInfo);
+
+		//add the body to the dynamics world
+		dynamicsWorld->addRigidBody(body);
+	}
+
+    btRigidBody *cube_body;
+    btCollisionShape* cube_col;
+	{
+		//create a dynamic rigidbody
+
+		//btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
+		cube_col = new btBoxShape(btVector3(1,1,1));
+		collisionShapes.push_back(cube_col);
+
+		/// Create Dynamic Objects
+		btTransform startTransform;
+		startTransform.setIdentity();
+
+		btScalar mass(1.f);
+
+		//rigidbody is dynamic if and only if mass is non zero, otherwise static
+		bool isDynamic = (mass != 0.f);
+
+		btVector3 localInertia(0, 0, 0);
+		if (isDynamic)
+			cube_col->calculateLocalInertia(mass, localInertia);
+
+		startTransform.setOrigin(btVector3(2, 10, 0));
+
+		//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
+		btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
+		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, cube_col, localInertia);
+		cube_body = new btRigidBody(rbInfo);
+
+		dynamicsWorld->addRigidBody(cube_body);
+	}
 
     Player player;
     player.pos = glm::vec3(0.0f, 0.0f, -3.0f);
     player.fwd = glm::vec3(0.0f, 0.0f, -1.0f);
+
+    btTransform start;
+    start.setIdentity();
+    start.setOrigin(btVector3(player.pos.x, player.pos.y, player.pos.z));
+
+    /* Create physics objects for the player */
+    btRigidBody *character;
+
+    btConvexShape *player_box = new btBoxShape(btVector3(1,1,1));
+    
+    float mass = 100.0f;
+    btVector3 localInertia(0, 0, 0);
+    player_box->calculateLocalInertia(mass, localInertia);
+	btDefaultMotionState* myMotionState = new btDefaultMotionState(start);
+    btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass, myMotionState, player_box, localInertia); 
+
+    rigidBodyCI.m_friction = 0.0f;
+    rigidBodyCI.m_restitution = 0.0f;
+
+    character = new btRigidBody(rigidBodyCI);
+
+    character->setAngularFactor(0.0f);
+    character->setActivationState(DISABLE_DEACTIVATION);
+
+    dynamicsWorld->addRigidBody(character);
 
     Model cube_model;
     Model cube2;
@@ -65,7 +195,7 @@ int main(void)
     cube2.commands_size = mesh_commands_length;
     cube2.verts_size = mesh_vertices_length; 
 
-    cube2.position = glm::vec3(0.0f, 0.0f, -3.0f);
+    cube2.position = glm::vec3(0.0f, 1.0f, -3.0f);
     cube2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
     cube_model.initalize();
@@ -79,10 +209,24 @@ int main(void)
 
     uint16_t perspective_normalization_scale = float_to_fixed(get_persp_norm_scale(near_plane, far_plane), 16);
 
-    glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, 3.0f, -3.0f);
+    glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, -5.0f, -3.0f);
     struct controller_data data;
     while(1)
     {
+        dynamicsWorld->stepSimulation(1.f / 30.f, 10);
+
+        btTransform trans = cube_body->getWorldTransform();
+
+        cube2.position = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
+        auto rot = trans.getRotation();
+        rot.getEulerZYX(cube2.rotation.y, cube2.rotation.x, cube2.rotation.z);
+
+        auto pp = character->getWorldTransform();
+        player.pos = glm::vec3(pp.getOrigin().getX(), pp.getOrigin().getY(), pp.getOrigin().getZ());
+
+        debugf("Player pos %f %f %f\n", player.pos.x, player.pos.y, player.pos.z);
+
+        
         controller_read(&data);
         glm::vec3 cam_fwd = camera_pos - player.pos;
         cam_fwd.y = 0;
@@ -99,11 +243,21 @@ int main(void)
             float yaw = glm::degrees(atan(-analog_dir.z / analog_dir.x));
 
             player.fwd = analog_dir;
-            player.pos += analog;
+
+            character->setLinearVelocity(10.0f*btVector3(analog_dir.x, analog_dir.y, analog_dir.z));
+            character->clearForces();
             cube_model.rotation.y = yaw;
+            character->rot = btQuaternion(glm::radians(cube_model.rotation.y), 
+                                     glm::radians(cube_model.rotation.z),
+                                     glm::radians(cube_model.rotation.x));
+        }
+        else
+        {
+            character->setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+            character->clearForces();
         }
 
-        glm::vec3 new_cam_pos = player.pos - (5.0f*player.fwd + glm::vec3(0.0f, 2.0f, 0.0f));
+        glm::vec3 new_cam_pos = player.pos - (5.0f*player.fwd + glm::vec3(0.0f, -5.0f, 0.0f));
 
         camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
         cube_model.position = player.pos;
