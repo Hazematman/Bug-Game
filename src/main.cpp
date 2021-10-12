@@ -12,6 +12,7 @@
 
 #include "cube.hpp"
 #include "model.hpp"
+#include "physmesh.hpp"
 
 #include "test_level.hpp"
 
@@ -93,32 +94,7 @@ int main(void)
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
     dynamicsWorld->setGravity(btVector3(0, -10, 0));
 
-	{
-		btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(50.), btScalar(50.)));
-
-		collisionShapes.push_back(groundShape);
-
-		btTransform groundTransform;
-		groundTransform.setIdentity();
-		groundTransform.setOrigin(btVector3(0, -51, 0));
-
-		btScalar mass(0.);
-
-		//rigidbody is dynamic if and only if mass is non zero, otherwise static
-		bool isDynamic = (mass != 0.f);
-
-		btVector3 localInertia(0, 0, 0);
-		if (isDynamic)
-			groundShape->calculateLocalInertia(mass, localInertia);
-
-		//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-		btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-		btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-		btRigidBody* body = new btRigidBody(rbInfo);
-
-		//add the body to the dynamics world
-		dynamicsWorld->addRigidBody(body);
-	}
+    PhysMesh level_mesh(test_level_verts, test_level_verts_length, dynamicsWorld, btVector3(0,-2,0));
 
     btRigidBody *cube_body;
     btCollisionShape* cube_col;

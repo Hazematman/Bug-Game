@@ -13,7 +13,7 @@ const uint16_t test_level_wood[]  __attribute__ ((aligned (64))) =
 };
 
 
-const ugfx_vertex_t test_level_verts[] = {
+ugfx_vertex_t test_level_verts[] = {
 make_vertex_c(-62.4139, 1.0, 40.3478, 1.0, 0.0909, 255, 255, 255, 255),
 make_vertex_c(-49.6249, 1.0, 50.4511, 0.9091, 0.0, 255, 255, 255, 255),
 make_vertex_c(-49.6249, 1.0, 40.3478, 0.9091, 0.0909, 255, 255, 255, 255),
@@ -964,7 +964,7 @@ make_vertex_c(8.5632, 16.2707, 9.4398, 1.0, 1.0, 255, 255, 255, 255),
 make_vertex_c(8.5632, 0.9818, 9.4398, 1.0, 0.0, 255, 255, 255, 255),
 
 };
-const ugfx_command_t test_level_commands[] = {
+ugfx_command_t test_level_commands[] = {
 ugfx_set_address_slot(1, test_level_verts),
 ugfx_sync_load(),
 ugfx_set_combine_mode(UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_T0_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1, UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_T0_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1),
@@ -1331,4 +1331,5 @@ ugfx_draw_triangle(15, 16, 17),
 ugfx_finalize(),
 };
 
-const uint32_t test_level_commands_length = sizeof(test_level_commands) / sizeof(*test_level_commands);
+uint32_t test_level_verts_length = sizeof(test_level_verts) / sizeof(*test_level_verts);
+uint32_t test_level_commands_length = sizeof(test_level_commands) / sizeof(*test_level_commands);

@@ -123,14 +123,15 @@ def export_model(data, input_file, output_name):
 
 {materials}
 
-const ugfx_vertex_t {mesh}_verts[] = {{
+ugfx_vertex_t {mesh}_verts[] = {{
 {verts}
 }};
-const ugfx_command_t {mesh}_commands[] = {{
+ugfx_command_t {mesh}_commands[] = {{
 {commands}
 }};
 
-const uint32_t {mesh}_commands_length = sizeof({mesh}_commands) / sizeof(*{mesh}_commands);""".format(
+uint32_t {mesh}_verts_length = sizeof({mesh}_verts) / sizeof(*{mesh}_verts);
+uint32_t {mesh}_commands_length = sizeof({mesh}_commands) / sizeof(*{mesh}_commands);""".format(
         materials=material_strings, mesh=file_name, verts=model_vert_string, 
         commands=model_display_list)
 
@@ -144,9 +145,10 @@ const uint32_t {mesh}_commands_length = sizeof({mesh}_commands) / sizeof(*{mesh}
 #define {header_guard}_H
 #include <ugfx.h>
 
-extern const ugfx_vertex_t {mesh}_verts[];
-extern const ugfx_command_t {mesh}_commands[];
-extern const uint32_t {mesh}_commands_length;
+extern ugfx_vertex_t {mesh}_verts[];
+extern ugfx_command_t {mesh}_commands[];
+extern uint32_t {mesh}_verts_length; 
+extern uint32_t {mesh}_commands_length;
 
 #endif""".format(header_guard=file_name.upper(), mesh=file_name)
 

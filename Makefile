@@ -15,6 +15,7 @@ $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \
+	$(BUILD_DIR)/physmesh.o \
 
 $(ROMNAME).z64: N64_ROM_TITLE="${ROMNAME}"
 

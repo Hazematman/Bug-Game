@@ -3,8 +3,9 @@
 #define TEST_LEVEL_H
 #include <ugfx.h>
 
-extern const ugfx_vertex_t test_level_verts[];
-extern const ugfx_command_t test_level_commands[];
-extern const uint32_t test_level_commands_length;
+extern ugfx_vertex_t test_level_verts[];
+extern ugfx_command_t test_level_commands[];
+extern uint32_t test_level_verts_length; 
+extern uint32_t test_level_commands_length;
 
 #endif
