@@ -147,8 +147,8 @@ int main(void)
 	btDefaultMotionState* myMotionState = new btDefaultMotionState(start);
     btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass, myMotionState, player_box, localInertia); 
 
-    rigidBodyCI.m_friction = 0.0f;
-    rigidBodyCI.m_restitution = 0.0f;
+    //rigidBodyCI.m_friction = 100.0f;
+    //rigidBodyCI.m_restitution = 0.0f;
 
     character = new btRigidBody(rigidBodyCI);
 
@@ -180,7 +180,7 @@ int main(void)
     cube2.initalize();
 
     float near_plane = 0.1f;
-    float far_plane = 1000.0f;
+    float far_plane = 100.0f;
 
     ugfx_matrix_t pv_matrix;
     auto mat = glm::perspective(glm::radians(90.0f), 320.0f/240.0f, near_plane, far_plane);
@@ -216,13 +216,17 @@ int main(void)
         glm::vec3 analog = fwd_value*cam_fwd + right_value*cam_right; 
         glm::vec3 analog_dir = glm::normalize(analog);
 
+        btVector3 old_velocity = character->getLinearVelocity();
+
         if(glm::length(analog) > 0.01f)
         {
             float yaw = glm::degrees(atan(-analog_dir.z / analog_dir.x));
 
             player.fwd = analog_dir;
 
-            character->setLinearVelocity(10.0f*btVector3(analog_dir.x, analog_dir.y, analog_dir.z));
+
+
+            character->setLinearVelocity(btVector3(10.0f*analog_dir.x, old_velocity.getY(), 10.0f*analog_dir.z));
             character->clearForces();
             cube_model.rotation.y = yaw;
 #if 0
@@ -233,7 +237,7 @@ int main(void)
         }
         else
         {
-            character->setLinearVelocity(btVector3(0.0f, 0.0f, 0.0f));
+            character->setLinearVelocity(btVector3(0.0f, old_velocity.getY(), 0.0f));
             character->clearForces();
         }
 
@@ -247,7 +251,10 @@ int main(void)
         ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
         data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
 
-        glm::mat4 level_mat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -2.0f, 0.0f));
+        btTransform level_transform = level_mesh.body->getWorldTransform();
+        btVector3 level_vec = level_transform.getOrigin();
+
+        glm::mat4 level_mat = glm::translate(glm::mat4(1.0f), glm::vec3(level_vec.getX(), level_vec.getY(), level_vec.getZ()));
         ugfx_matrix_t level_mat_u;
         ugfx_matrix_from_column_major(&level_mat_u, &level_mat[0][0]);
         data_cache_hit_writeback(&level_mat_u, sizeof(level_mat_u));

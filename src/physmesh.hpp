@@ -13,9 +13,10 @@ private:
     btGImpactMeshShape *gimpact;
     btDefaultMotionState *motion_state;
     btCollisionShape* collisionshape;
-    btRigidBody *body;
 public:
     PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynamicsWorld *dynWorld, btVector3 origin);
+
+    btRigidBody *body;
 };
 
 #endif
