@@ -1,6 +1,7 @@
 #include "physmesh.hpp"
 
-PhysMesh::PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynamicsWorld *dynWorld, btVector3 origin)
+PhysMesh::PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynamicsWorld *dynWorld, 
+                   btVector3 origin, uint32_t bitmask, uint32_t group)
 {
     btVector3 verts[3];
     trimesh = new btTriangleMesh();
@@ -28,5 +29,5 @@ PhysMesh::PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynam
     btRigidBody::btRigidBodyConstructionInfo ci(0, motion_state, collisionshape, inertia);
     body = new btRigidBody(ci);
 
-    dynWorld->addRigidBody(body);
+    dynWorld->addRigidBody(body, group, bitmask);
 }

@@ -14,7 +14,8 @@ private:
     btDefaultMotionState *motion_state;
     btCollisionShape* collisionshape;
 public:
-    PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynamicsWorld *dynWorld, btVector3 origin);
+    PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynamicsWorld *dynWorld, 
+             btVector3 origin, uint32_t bitmask=0, uint32_t group=0);
 
     btRigidBody *body;
 };

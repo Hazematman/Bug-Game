@@ -62,6 +62,13 @@ void my_ugfx_viewport_init(ugfx_viewport_t *viewport, int16_t left, int16_t top,
     };
 }
 
+volatile bool dp_sync_status;
+
+void dp_sync()
+{
+    dp_sync_status = true;
+}
+
 int main(void)
 {
     init_interrupts();
@@ -74,6 +81,9 @@ int main(void)
     display_init(res, bit, 2, GAMMA_NONE, ANTIALIAS_RESAMPLE_FETCH_ALWAYS);
     ugfx_init(UGFX_DEFAULT_RDP_BUFFER_SIZE);
     dfs_init(DFS_DEFAULT_LOCATION);
+
+    register_DP_handler(dp_sync);
+    set_DP_interrupt(true);
 
     /* Force flashing of denomralized numbers */
     uint32_t fcr31 = C1_FCR31();
@@ -92,9 +102,9 @@ int main(void)
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
-    dynamicsWorld->setGravity(btVector3(0, -10, 0));
+    dynamicsWorld->setGravity(btVector3(0, -20, 0));
 
-    PhysMesh level_mesh(test_level_verts, test_level_verts_length, dynamicsWorld, btVector3(0,-2,0));
+    PhysMesh level_mesh(test_level_verts, test_level_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
 
     btRigidBody *cube_body;
     btCollisionShape* cube_col;
@@ -189,9 +199,10 @@ int main(void)
 
     glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, -5.0f, -3.0f);
     struct controller_data data;
+    bool injump = false;
     while(1)
     {
-        dynamicsWorld->stepSimulation(1.f / 30.f, 10);
+        dynamicsWorld->stepSimulation(1.f / 20.f, 10);
 
         btTransform trans = cube_body->getWorldTransform();
 
@@ -211,8 +222,8 @@ int main(void)
         cam_fwd = glm::normalize(cam_fwd);
         glm::vec3 cam_right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam_fwd));
 
-        float right_value = (float)data.c[0].x / 1024.0f;
-        float fwd_value = -(float)data.c[0].y / 1024.0f;
+        float right_value = (float)data.c[0].x / 128.0f;
+        float fwd_value = -(float)data.c[0].y / 128.0f;
         glm::vec3 analog = fwd_value*cam_fwd + right_value*cam_right; 
         glm::vec3 analog_dir = glm::normalize(analog);
 
@@ -239,6 +250,31 @@ int main(void)
         {
             character->setLinearVelocity(btVector3(0.0f, old_velocity.getY(), 0.0f));
             character->clearForces();
+        }
+
+        /* Raycast to check if player is on ground */
+        btVector3 player_pos = pp.getOrigin();
+        btVector3 check_position = player_pos + btVector3(0, -2, 0);
+        btCollisionWorld::ClosestRayResultCallback ray_callback(player_pos, check_position);
+        /* Only check for collisions with the ground */
+        ray_callback.m_collisionFilterMask = 2;
+        ray_callback.m_collisionFilterGroup = 2;
+        dynamicsWorld->rayTest(player_pos, check_position, ray_callback);
+
+        /* Add a jump */
+        if(!injump && ray_callback.hasHit() && data.c[0].A)
+        {
+            btVector3 velocity = character->getLinearVelocity();
+            velocity.setY(12.0f);
+            character->setLinearVelocity(velocity);
+            character->clearForces();
+            injump = true;
+        }
+
+        /* only reset injump value once the player has let go A and touched the ground */ 
+        if(ray_callback.hasHit() && injump && !data.c[0].A)
+        {
+            injump = false;
         }
 
         glm::vec3 new_cam_pos = player.pos - (5.0f*player.fwd + glm::vec3(0.0f, -5.0f, 0.0f));
@@ -311,8 +347,16 @@ int main(void)
 
         debugf("number of commands %d\r\n", (int)num_commands);
 
+        dp_sync_status = false;
         ugfx_load(&disp_commands[0], num_commands);
         rsp_run();
+
+        while(!dp_sync_status) {}
+
+
+        char buf[128];
+        sprintf(buf, "injump = %s\n", injump ? "true": "false");
+        graphics_draw_text(disp, 20, 20, buf);
 
         display_show(disp);
     }
