@@ -80,8 +80,9 @@ int mixer_event(void *ctx)
 {
     static int index = 0;
 
+    int next_index = (index + 1) % (sizeof(test_song_stream) / sizeof(*test_song_stream));
 
-    float next_ts = test_song_stream[index].delta_time; 
+    float next_ts = test_song_stream[next_index].delta_time; 
     int num_samples = next_ts * 44100.0f;
 
     for(int i=0; i < (int)test_song_stream[index].num_events; i++)
@@ -100,7 +101,7 @@ int mixer_event(void *ctx)
     }
 
     /* Increase index with looping around song */
-    index = (index + 1) % (sizeof(test_song_stream) / sizeof(*test_song_stream));
+    index = next_index;
 
     return num_samples == 0 ? 1 : num_samples;
 }
