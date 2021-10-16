@@ -102,7 +102,7 @@ int mixer_event(void *ctx)
     /* Increase index with looping around song */
     index = (index + 1) % (sizeof(test_song_stream) / sizeof(*test_song_stream));
 
-    return num_samples+1;
+    return num_samples == 0 ? 1 : num_samples;
 }
 
 int main(void)
