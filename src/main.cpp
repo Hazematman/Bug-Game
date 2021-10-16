@@ -19,6 +19,8 @@ extern "C" {
 #include "charactercontroller.hpp"
 
 #include "test_level_2.hpp"
+#include "sphere.hpp"
+#include "snow.hpp"
 
 
 wav64_t Casio_SA_76_Piano1;
@@ -131,6 +133,8 @@ int main(void)
     fcr31 |= (1<<24);
     C1_WRITE_FCR31(fcr31);
 
+    bool snow = false;
+
     ugfx_viewport_t viewport;
     my_ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     data_cache_hit_writeback(&viewport, sizeof(viewport));
@@ -146,6 +150,9 @@ int main(void)
     dynamicsWorld->setGravity(btVector3(0, -20, 0));
 
     PhysMesh level_mesh(test_level_2_verts, test_level_2_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
+    PhysMesh snow_mesh(snow_verts, snow_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
+
+    snow_mesh.body->setCollisionFlags(snow_mesh.body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
 
     btRigidBody *cube_body;
     btCollisionShape* cube_col;
@@ -214,6 +221,7 @@ int main(void)
 
     uint32_t prev_time = (uint32_t)get_ticks();
     float dt = 0.16f;
+    controller_data data;
     while(1)
     {
         /* Play audio */
@@ -224,9 +232,24 @@ int main(void)
             audio_write_end();
         }
 
-        character.update();
+        controller_read(&data);
 
-        dynamicsWorld->stepSimulation(1.f / 30.f, 10);
+        character.update(data);
+
+        if(data.c[0].B)
+        {
+            snow = !snow;
+            if(snow)
+            {
+                snow_mesh.body->setCollisionFlags(snow_mesh.body->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+            }
+            else
+            {
+                snow_mesh.body->setCollisionFlags(snow_mesh.body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+            }
+        }
+
+        dynamicsWorld->stepSimulation(1.0f / 30.f, 10);
 
         btTransform trans = cube_body->getWorldTransform();
 
@@ -296,6 +319,9 @@ int main(void)
 
         disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
         disp_commands.push_back(ugfx_push_commands(0, test_level_2_commands, test_level_2_commands_length));
+
+        if(snow)
+            disp_commands.push_back(ugfx_push_commands(0, snow_commands, snow_commands_length));
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());

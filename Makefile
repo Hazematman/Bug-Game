@@ -17,6 +17,8 @@ $(BUILD_DIR)/$(ROMNAME).dfs: \
 $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level.o \
 	$(BUILD_DIR)/test_level_2.o \
+	$(BUILD_DIR)/sphere.o \
+	$(BUILD_DIR)/snow.o \
 	$(BUILD_DIR)/charactercontroller.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \

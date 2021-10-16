@@ -30,11 +30,8 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     camera_pos = start_pos - glm::vec3(0.0f, -5.0f, -3.0f);
 }
 
-void CharacterController::update()
+void CharacterController::update(controller_data &data)
 {
-    struct controller_data data;
-    controller_read(&data);
-
     btTransform player_transform = body->getWorldTransform(); 
     btVector3 player_position = player_transform.getOrigin();
 

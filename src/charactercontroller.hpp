@@ -1,6 +1,7 @@
 #ifndef CHARACTERCONTROLLER_HPP
 #define CHARACTERCONTROLLER_HPP
 
+#include <libdragon.h>
 #include <glm/glm.hpp>
 #include <bullet/btBulletDynamicsCommon.h>
 
@@ -8,7 +9,7 @@ class CharacterController
 {
 public:
     CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos);
-    void update();
+    void update(controller_data &data);
     glm::mat4 getViewMatrix();
 
     float speed;
