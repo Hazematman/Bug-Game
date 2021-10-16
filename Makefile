@@ -11,6 +11,9 @@ $(ROMNAME).z64: LDFLAGS=-L$(N64_ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldrago
 
 all: $(ROMNAME).z64
 
+$(BUILD_DIR)/$(ROMNAME).dfs: \
+	filesystem/Casio_SA_76_Piano1.wav64 \
+
 $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level.o \
 	$(BUILD_DIR)/main.o \
@@ -18,6 +21,7 @@ $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/physmesh.o \
 
 $(ROMNAME).z64: N64_ROM_TITLE="${ROMNAME}"
+$(ROMNAME).z64: $(BUILD_DIR)/$(ROMNAME).dfs
 
 clean:
 	rm -rf $(BUILD_DIR) ${ROMNAME}.z64

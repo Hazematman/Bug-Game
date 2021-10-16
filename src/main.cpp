@@ -2,7 +2,9 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdint.h>
+extern "C" {
 #include <libdragon.h>
+};
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -15,6 +17,11 @@
 #include "physmesh.hpp"
 
 #include "test_level.hpp"
+
+
+wav64_t Casio_SA_76_Piano1;
+#include "midstream.hpp"
+#include "out.hpp"
 
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
@@ -69,12 +76,41 @@ void dp_sync()
     dp_sync_status = true;
 }
 
+int mixer_event(void *ctx)
+{
+    static int index = 0;
+
+
+    float next_ts = test_song_stream[index].delta_time; 
+    int num_samples = next_ts * 44100.0f;
+
+    for(int i=0; i < (int)test_song_stream[index].num_events; i++)
+    {
+        MixEvent &event = test_song_stream[index].events[i];
+        if(!event.start)
+        {
+            mixer_ch_stop(event.channel);
+        }
+        else
+        {
+            mixer_ch_play(event.channel, &event.sample->wave);
+            mixer_ch_set_vol(event.channel, event.volume, event.volume);
+            mixer_ch_set_freq(event.channel, event.freq);
+        }
+    }
+
+    /* Increase index with looping around song */
+    index = (index + 1) % (sizeof(test_song_stream) / sizeof(*test_song_stream));
+
+    return num_samples+1;
+}
+
 int main(void)
 {
     init_interrupts();
 
-    debug_init_usblog();
-    debug_init_isviewer();
+    //debug_init_usblog();
+    //debug_init_isviewer();
 
     /* Initalize basics */
     controller_init();
@@ -84,6 +120,16 @@ int main(void)
 
     register_DP_handler(dp_sync);
     set_DP_interrupt(true);
+
+    audio_init(44100, 8);
+    mixer_init(16);
+
+    for(int i = 0; i < 16; i++)
+        mixer_ch_set_limits(i, 0, 128000, 0);
+
+    wav64_open(&Casio_SA_76_Piano1, "Casio_SA_76_Piano1.wav64");
+
+    mixer_add_event(0, mixer_event, NULL);
 
     /* Force flashing of denomralized numbers */
     uint32_t fcr31 = C1_FCR31();
@@ -200,9 +246,20 @@ int main(void)
     glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, -5.0f, -3.0f);
     struct controller_data data;
     bool injump = false;
+    uint32_t prev_time = (uint32_t)get_ticks();
+    float dt = 0.16f;
     while(1)
     {
-        dynamicsWorld->stepSimulation(1.f / 20.f, 10);
+        /* Play audio */
+        //while(!audio_can_write()) {}
+        if(audio_can_write())
+        {
+            short *buf = audio_write_begin();
+            mixer_poll(buf, audio_get_buffer_length());
+            audio_write_end();
+        }
+
+        dynamicsWorld->stepSimulation(1.f / 30.f, 10);
 
         btTransform trans = cube_body->getWorldTransform();
 
@@ -213,9 +270,6 @@ int main(void)
         auto pp = character->getWorldTransform();
         player.pos = glm::vec3(pp.getOrigin().getX(), pp.getOrigin().getY(), pp.getOrigin().getZ());
 
-        debugf("Player pos %f %f %f\n", player.pos.x, player.pos.y, player.pos.z);
-
-        
         controller_read(&data);
         glm::vec3 cam_fwd = camera_pos - player.pos;
         cam_fwd.y = 0;
@@ -345,9 +399,8 @@ int main(void)
         data_cache_hit_writeback(&disp_commands[0], disp_commands.size()*sizeof(ugfx_command_t));
         uint32_t num_commands = disp_commands.size();
 
-        debugf("number of commands %d\r\n", (int)num_commands);
-
         dp_sync_status = false;
+        rsp_wait();
         ugfx_load(&disp_commands[0], num_commands);
         rsp_run();
 
@@ -358,6 +411,30 @@ int main(void)
         sprintf(buf, "injump = %s\n", injump ? "true": "false");
         graphics_draw_text(disp, 20, 20, buf);
 
+        sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
+        graphics_draw_text(disp, 20, 30, buf);
+
+        /* Play audio again before we wait for vsync */
+        if(audio_can_write())
+        {
+            short *buf = audio_write_begin();
+            mixer_poll(buf, audio_get_buffer_length());
+            audio_write_end();
+        }
+
         display_show(disp);
+
+        uint32_t new_time = (uint32_t)get_ticks();
+        uint32_t ticks_delta;
+        if(new_time < prev_time)
+        {
+            ticks_delta = (0xFFFFFFFF - prev_time) + new_time;
+        }
+        else
+        {
+            ticks_delta = new_time - prev_time;
+        }
+        dt = (float)(ticks_delta) / (float)(TICKS_PER_SECOND);
+        prev_time = new_time;
     }
 }
