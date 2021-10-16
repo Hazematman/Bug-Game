@@ -7,6 +7,7 @@ extern "C" {
 };
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include <bullet/btBulletDynamicsCommon.h>
 #include <bullet/BulletDynamics/Character/btKinematicCharacterController.h>
@@ -15,8 +16,9 @@ extern "C" {
 #include "cube.hpp"
 #include "model.hpp"
 #include "physmesh.hpp"
+#include "charactercontroller.hpp"
 
-#include "test_level.hpp"
+#include "test_level_2.hpp"
 
 
 wav64_t Casio_SA_76_Piano1;
@@ -34,14 +36,6 @@ static display_context_t disp = 0;
 UgfxCommandBuffer disp_commands(UGFX_CMDBUF_SIZE);
 
 uint8_t depth_buffer[DISPLAY_WIDTH*DISPLAY_HEIGHT*2] __attribute__ ((aligned (64)));
-
-class Player
-{
-    public:
-        glm::vec3 pos;
-        glm::vec3 fwd;
-};
-
 
 void my_ugfx_viewport_init(ugfx_viewport_t *viewport, int16_t left, int16_t top, int16_t right, int16_t bottom)
 {
@@ -151,7 +145,7 @@ int main(void)
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
     dynamicsWorld->setGravity(btVector3(0, -20, 0));
 
-    PhysMesh level_mesh(test_level_verts, test_level_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
+    PhysMesh level_mesh(test_level_2_verts, test_level_2_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
 
     btRigidBody *cube_body;
     btCollisionShape* cube_col;
@@ -185,34 +179,8 @@ int main(void)
 		dynamicsWorld->addRigidBody(cube_body);
 	}
 
-    Player player;
-    player.pos = glm::vec3(0.0f, 0.0f, -3.0f);
-    player.fwd = glm::vec3(0.0f, 0.0f, -1.0f);
-
-    btTransform start;
-    start.setIdentity();
-    start.setOrigin(btVector3(player.pos.x, player.pos.y, player.pos.z));
-
-    /* Create physics objects for the player */
-    btRigidBody *character;
-
-    btConvexShape *player_box = new btBoxShape(btVector3(1,1,1));
-    
-    float mass = 100.0f;
-    btVector3 localInertia(0, 0, 0);
-    player_box->calculateLocalInertia(mass, localInertia);
-	btDefaultMotionState* myMotionState = new btDefaultMotionState(start);
-    btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass, myMotionState, player_box, localInertia); 
-
-    //rigidBodyCI.m_friction = 100.0f;
-    //rigidBodyCI.m_restitution = 0.0f;
-
-    character = new btRigidBody(rigidBodyCI);
-
-    character->setAngularFactor(0.0f);
-    character->setActivationState(DISABLE_DEACTIVATION);
-
-    dynamicsWorld->addRigidBody(character);
+    glm::vec3 start_pos = glm::vec3(0.0f, 0.0f, -3.0f);
+    CharacterController character(dynamicsWorld, start_pos);
 
     Model cube_model;
     Model cube2;
@@ -244,15 +212,11 @@ int main(void)
 
     uint16_t perspective_normalization_scale = float_to_fixed(get_persp_norm_scale(near_plane, far_plane), 16);
 
-    glm::vec3 camera_pos = player.pos - glm::vec3(0.0f, -5.0f, -3.0f);
-    struct controller_data data;
-    bool injump = false;
     uint32_t prev_time = (uint32_t)get_ticks();
     float dt = 0.16f;
     while(1)
     {
         /* Play audio */
-        //while(!audio_can_write()) {}
         if(audio_can_write())
         {
             short *buf = audio_write_begin();
@@ -260,84 +224,23 @@ int main(void)
             audio_write_end();
         }
 
+        character.update();
+
         dynamicsWorld->stepSimulation(1.f / 30.f, 10);
 
         btTransform trans = cube_body->getWorldTransform();
 
         cube2.position = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
         auto rot = trans.getRotation();
-        rot.getEulerZYX(cube2.rotation.y, cube2.rotation.x, cube2.rotation.z);
+        cube2.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
 
-        auto pp = character->getWorldTransform();
-        player.pos = glm::vec3(pp.getOrigin().getX(), pp.getOrigin().getY(), pp.getOrigin().getZ());
+        btTransform player_t = character.body->getWorldTransform();
+        btVector3 player_p = player_t.getOrigin();
+        rot = player_t.getRotation();
+        cube_model.position = glm::vec3(player_p[0], player_p[1], player_p[2]);
+        cube_model.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
 
-        controller_read(&data);
-        glm::vec3 cam_fwd = camera_pos - player.pos;
-        cam_fwd.y = 0;
-        cam_fwd = glm::normalize(cam_fwd);
-        glm::vec3 cam_right = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam_fwd));
-
-        float right_value = (float)data.c[0].x / 128.0f;
-        float fwd_value = -(float)data.c[0].y / 128.0f;
-        glm::vec3 analog = fwd_value*cam_fwd + right_value*cam_right; 
-        glm::vec3 analog_dir = glm::normalize(analog);
-
-        btVector3 old_velocity = character->getLinearVelocity();
-
-        if(glm::length(analog) > 0.01f)
-        {
-            float yaw = glm::degrees(atan(-analog_dir.z / analog_dir.x));
-
-            player.fwd = analog_dir;
-
-
-
-            character->setLinearVelocity(btVector3(10.0f*analog_dir.x, old_velocity.getY(), 10.0f*analog_dir.z));
-            character->clearForces();
-            cube_model.rotation.y = yaw;
-#if 0
-            character->rot = btQuaternion(glm::radians(cube_model.rotation.y), 
-                                     glm::radians(cube_model.rotation.z),
-                                     glm::radians(cube_model.rotation.x));
-#endif
-        }
-        else
-        {
-            character->setLinearVelocity(btVector3(0.0f, old_velocity.getY(), 0.0f));
-            character->clearForces();
-        }
-
-        /* Raycast to check if player is on ground */
-        btVector3 player_pos = pp.getOrigin();
-        btVector3 check_position = player_pos + btVector3(0, -2, 0);
-        btCollisionWorld::ClosestRayResultCallback ray_callback(player_pos, check_position);
-        /* Only check for collisions with the ground */
-        ray_callback.m_collisionFilterMask = 2;
-        ray_callback.m_collisionFilterGroup = 2;
-        dynamicsWorld->rayTest(player_pos, check_position, ray_callback);
-
-        /* Add a jump */
-        if(!injump && ray_callback.hasHit() && data.c[0].A)
-        {
-            btVector3 velocity = character->getLinearVelocity();
-            velocity.setY(12.0f);
-            character->setLinearVelocity(velocity);
-            character->clearForces();
-            injump = true;
-        }
-
-        /* only reset injump value once the player has let go A and touched the ground */ 
-        if(ray_callback.hasHit() && injump && !data.c[0].A)
-        {
-            injump = false;
-        }
-
-        glm::vec3 new_cam_pos = player.pos - (5.0f*player.fwd + glm::vec3(0.0f, -5.0f, 0.0f));
-
-        camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
-        cube_model.position = player.pos;
-
-        glm::mat4 view_mat = glm::lookAt(camera_pos, player.pos, glm::vec3(0.0f, 1.0f, 0.0f));;
+        glm::mat4 view_mat = character.getViewMatrix();
         glm::mat4 pv = mat * view_mat;
         ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
         data_cache_hit_writeback(&pv_matrix, sizeof(pv_matrix));
@@ -392,7 +295,7 @@ int main(void)
         cube2.draw(disp_commands);
 
         disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
-        disp_commands.push_back(ugfx_push_commands(0, test_level_commands, test_level_commands_length));
+        disp_commands.push_back(ugfx_push_commands(0, test_level_2_commands, test_level_2_commands_length));
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());
@@ -409,8 +312,10 @@ int main(void)
 
 
         char buf[128];
-        sprintf(buf, "injump = %s\n", injump ? "true": "false");
+#if 1
+        sprintf(buf, "rotation = %f\n", cube_model.rotation.y);
         graphics_draw_text(disp, 20, 20, buf);
+#endif
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
         graphics_draw_text(disp, 20, 30, buf);

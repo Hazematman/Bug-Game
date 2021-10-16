@@ -67,36 +67,38 @@ def export_model(data, input_file, output_name):
     face_index = 0
     material_strings = ""
     for material in data[1]:
-        # Go through all the materials and convert their textures into
-        # an N64 compatible format like RGBA_5551
-        image = Image.open("{}/{}.png".format(path_name, material))
-        width, height = image.size
-        material_strings += "const uint16_t {}_{}[]  __attribute__ ((aligned (64))) = \n{{\n".format(file_name, material)
-        for y in range(height):
-            for x in range(width):
-                r,g,b,a = image.getpixel((x,y))
-                a = 1 if a > 0 else 1
-                r = convert(r, 0, 255, 0, 31)
-                g = convert(g, 0, 255, 0, 31)
-                b = convert(b, 0, 255, 0, 31)
-                val = (r<<11)|(g<<6)|(b<<1)|a
-                material_strings += "{},".format(hex(val))
-        material_strings += "\n};\n"
+        if material != "verts":
+            # Go through all the materials and convert their textures into
+            # an N64 compatible format like RGBA_5551
+            image = Image.open("{}/{}.png".format(path_name, material))
+            width, height = image.size
+            material_strings += "const uint16_t {}_{}[]  __attribute__ ((aligned (64))) = \n{{\n".format(file_name, material)
+            for y in range(height):
+                for x in range(width):
+                    r,g,b,a = image.getpixel((x,y))
+                    a = 1 if a > 0 else 1
+                    r = convert(r, 0, 255, 0, 31)
+                    g = convert(g, 0, 255, 0, 31)
+                    b = convert(b, 0, 255, 0, 31)
+                    val = (r<<11)|(g<<6)|(b<<1)|a
+                    material_strings += "{},".format(hex(val))
+            material_strings += "\n};\n"
 
         # Add material display list command
         if material == "verts":
-            print("VERTEX COLORS NOT SUPPORTED YET")
+            model_display_list += "ugfx_sync_pipe(),\n"
+            model_display_list += "ugfx_set_combine_mode(UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_SHADE_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1, UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_SHADE_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1),\n"
+            model_display_list += "ugfx_set_geometry_mode(UGFX_GEOMETRY_SHADE | UGFX_GEOMETRY_ZBUFFER | UGFX_GEOMETRY_SMOOTH),\n"
         else:
             width_percent = int((width / 64.0) * 0xFFFF)
             height_percent = int((height / 64.0) * 0xFFFF)
-            model_display_list += "ugfx_sync_load(),\n"
+            model_display_list += "ugfx_sync_pipe(),\n"
             model_display_list += "ugfx_set_combine_mode(UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_T0_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1, UGFX_CC_SUB_0, UGFX_CC_SUB_0, UGFX_CC_MUL_0, UGFX_CC_T0_COLOR, UGFX_AC_0, UGFX_AC_0, UGFX_AC_0, UGFX_AC_1),\n"
             model_display_list += "ugfx_set_geometry_mode(UGFX_GEOMETRY_SHADE | UGFX_GEOMETRY_ZBUFFER | UGFX_GEOMETRY_TEXTURE | UGFX_GEOMETRY_SMOOTH),\n"
             model_display_list += "ugfx_set_texture_image(0, {}_{}, UGFX_FORMAT_RGBA, UGFX_PIXEL_SIZE_16B, {} - 1),\n".format(file_name, material, width)
             model_display_list += "ugfx_set_tile(UGFX_FORMAT_RGBA, UGFX_PIXEL_SIZE_16B, (2 * {}) >> 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),\n".format(width)
             model_display_list += "ugfx_load_tile(0 << 2, 0 << 2, ({} - 1) << 2, ({} - 1) << 2, 0),\n".format(width, height)
             model_display_list += "ugfx_set_texture_settings({}, {}, 0, 0),\n".format(hex(width_percent), hex(height_percent))
-
 
         for face in data[1][material]:
             for v in face:

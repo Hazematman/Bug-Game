@@ -2,6 +2,7 @@
 #define MODEL_HPP
 #include <libdragon.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include "internal.hpp"
 
 class Model
@@ -13,7 +14,7 @@ public:
     size_t commands_size;
     uint32_t num_commands;
     glm::vec3 position;
-    glm::vec3 rotation;
+    glm::quat rotation;
     ugfx_matrix_t matrix;
 
     void initalize();
