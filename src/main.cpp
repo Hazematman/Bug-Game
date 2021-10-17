@@ -17,9 +17,9 @@ extern "C" {
 #include "model.hpp"
 #include "physmesh.hpp"
 #include "charactercontroller.hpp"
+#include "gameobject.hpp"
 
 #include "test_level_2.hpp"
-#include "sphere.hpp"
 #include "snow.hpp"
 
 
@@ -112,6 +112,15 @@ void play_audio()
     }
 }
 
+int col_count = 0;
+
+bool bulletCallback(btManifoldPoint &cp, const btCollisionObjectWrapper *obj1, int id1, int index1,
+                                         const btCollisionObjectWrapper *obj2, int id2, int index2)
+{
+    col_count += 1;
+    return false;
+}
+
 int main(void)
 {
     init_interrupts();
@@ -145,6 +154,9 @@ int main(void)
 
     bool snow = false;
 
+    /* Set bullet callback function */
+    gContactAddedCallback = bulletCallback;
+
     ugfx_viewport_t viewport;
     my_ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
     data_cache_hit_writeback(&viewport, sizeof(viewport));
@@ -162,14 +174,7 @@ int main(void)
     PhysMesh level_mesh(test_level_2_verts, test_level_2_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
     PhysMesh snow_mesh(snow_verts, snow_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
 
-    PhysMesh ball_p(100.0f, 1.0f, dynamicsWorld, btVector3(-20,10,8), 0xF, 0xF);
-
-    Model ball;
-    ball.verts = sphere_verts;
-    ball.commands = sphere_commands;
-    ball.verts_size = sphere_verts_length*sizeof(ugfx_vertex_t);
-    ball.commands_size = sphere_commands_length*sizeof(ugfx_command_t);
-    ball.initalize();
+    GameObject *crystal = create_crystal(dynamicsWorld);
 
     snow_mesh.body->setCollisionFlags(snow_mesh.body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
 
@@ -277,12 +282,6 @@ int main(void)
         cube_model.position = glm::vec3(player_p[0], player_p[1], player_p[2]);
         cube_model.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
 
-        btTransform ball_t = ball_p.body->getWorldTransform();
-        btVector3 ball_pos = ball_t.getOrigin();
-        rot = ball_t.getRotation();
-        ball.position = glm::vec3(ball_pos[0], ball_pos[1], ball_pos[2]);
-        ball.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
-
         glm::mat4 view_mat = character.getViewMatrix();
         glm::mat4 pv = mat * view_mat;
         ugfx_matrix_from_column_major(&pv_matrix, &pv[0][0]);
@@ -343,7 +342,7 @@ int main(void)
         if(snow)
             disp_commands.push_back(ugfx_push_commands(0, snow_commands, snow_commands_length));
 
-        ball.draw(disp_commands);
+        crystal->draw(disp_commands);
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());
@@ -360,10 +359,8 @@ int main(void)
 
 
         char buf[128];
-#if 1
-        sprintf(buf, "rotation = %f\n", cube_model.rotation.y);
+        sprintf(buf, "collisions = %d\n", col_count);
         graphics_draw_text(disp, 20, 20, buf);
-#endif
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
         graphics_draw_text(disp, 20, 30, buf);
