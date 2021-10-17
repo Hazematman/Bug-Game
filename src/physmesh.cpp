@@ -21,13 +21,26 @@ PhysMesh::PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynam
 
     gimpact = new btGImpactMeshShape(trimesh);
     gimpact->updateBound();
-    collisionshape = gimpact;
+    col_shape = gimpact;
 
     motion_state = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), origin));
     btVector3 inertia;
-    collisionshape->calculateLocalInertia(0, inertia);
-    btRigidBody::btRigidBodyConstructionInfo ci(0, motion_state, collisionshape, inertia);
+    col_shape->calculateLocalInertia(0, inertia);
+    btRigidBody::btRigidBodyConstructionInfo ci(0, motion_state, col_shape, inertia);
     body = new btRigidBody(ci);
 
+    dynWorld->addRigidBody(body, group, bitmask);
+}
+
+
+PhysMesh::PhysMesh(float mass, float radius, btDiscreteDynamicsWorld *dynWorld, 
+                   btVector3 origin, uint32_t bitmask, uint32_t group)
+{
+    col_shape = new btSphereShape(radius);
+    motion_state = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), origin));
+    btVector3 inertia;
+    col_shape->calculateLocalInertia(mass, inertia);
+    btRigidBody::btRigidBodyConstructionInfo ci(mass, motion_state, col_shape, inertia);
+    body = new btRigidBody(ci);
     dynWorld->addRigidBody(body, group, bitmask);
 }
