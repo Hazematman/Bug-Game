@@ -4,7 +4,7 @@
 #include "mesh.hpp"
 
 /* A constant vertex buffer. This could also be loaded from the cart. */
-ugfx_vertex_t mesh_vertices[] = {
+static ugfx_vertex_t mesh_vertices[] = {
     /* -Z */
     make_vertex_n(-1, -1, -1, 1, 1, 0, 0, -128, 255),
     make_vertex_n(+1, -1, -1, 0, 1, 0, 0, -128, 255),
@@ -38,7 +38,7 @@ ugfx_vertex_t mesh_vertices[] = {
 };
 
 /* A constant command list. This could also be loaded from the cart. */
-ugfx_command_t mesh_commands[] = {
+static ugfx_command_t mesh_commands[] = {
 
     /* Load 24 vertices from address 0x0 to index 0 in the vertex cache, using address slot 1.
        The actual address the vertices will be dma'd from is determined by adding the
@@ -74,7 +74,7 @@ ugfx_command_t mesh_commands[] = {
     ugfx_finalize(),
 };
 
-uint32_t mesh_commands_length = sizeof(mesh_commands);
-uint32_t mesh_vertices_length = sizeof(mesh_vertices_length);
+static uint32_t mesh_commands_length = sizeof(mesh_commands);
+static uint32_t mesh_vertices_length = sizeof(mesh_vertices_length);
 
 #endif

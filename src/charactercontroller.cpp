@@ -2,26 +2,28 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "charactercontroller.hpp"
 
+#include "cube.hpp"
+
 CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos) :
     dyn_world(dyn_world)
 {
+    this->type = GOBJ_PLAYER;
     float mass = 100.0f;
     this->speed = 10.0f;
 
-    btTransform start(btQuaternion(0,0,0,1), btVector3(start_pos.x, start_pos.y, start_pos.z));
+    phys = new PhysMesh(mass, btVector3(1,1,1), dyn_world, btVector3(start_pos.x, start_pos.y, start_pos.z),
+                        0xf, 0xf);
+    phys->body->setAngularFactor(0.0f);
+    phys->body->setActivationState(DISABLE_DEACTIVATION);
+    phys->body->setUserPointer(this);
 
-    shape = new btBoxShape(btVector3(1,1,1));
-    btVector3 localInertia(0,0,0);
-    shape->calculateLocalInertia(mass, localInertia); 
-    motion_state = new btDefaultMotionState(start);
+    model = new Model;
 
-    btRigidBody::btRigidBodyConstructionInfo rigidBodyCI(mass, motion_state, shape, localInertia);
-
-    body = new btRigidBody(rigidBodyCI);
-    body->setAngularFactor(0.0f);
-    body->setActivationState(DISABLE_DEACTIVATION);
-
-    dyn_world->addRigidBody(body);
+    model->verts = mesh_vertices;
+    model->commands = mesh_commands;
+    model->commands_size = mesh_commands_length;
+    model->verts_size = mesh_vertices_length; 
+    model->initalize();
 
     /* Set player state */
     injump = false;
@@ -32,7 +34,7 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
 
 void CharacterController::update(controller_data &data)
 {
-    btTransform player_transform = body->getWorldTransform(); 
+    btTransform player_transform = phys->body->getWorldTransform(); 
     btVector3 player_position = player_transform.getOrigin();
 
     float right_value = (float)data.c[0].x / 128.0f;
@@ -45,7 +47,7 @@ void CharacterController::update(controller_data &data)
 
     glm::vec3 analog = fwd_value*cam_fwd + right_value*cam_right;
 
-    btVector3 old_velocity = body->getLinearVelocity();
+    btVector3 old_velocity = phys->body->getLinearVelocity();
     
     if(glm::length(analog) > 0.01f)
     {
@@ -55,14 +57,14 @@ void CharacterController::update(controller_data &data)
         btQuaternion new_rot(-right_value*amount, 0, 0);
 
         player_transform.setRotation((player_transform.getRotation() * new_rot));
-        body->setWorldTransform(player_transform);
-        body->setLinearVelocity(btVector3(speed*analog_dir.x, old_velocity[1], speed*analog_dir.z));
-        body->clearForces();
+        phys->body->setWorldTransform(player_transform);
+        phys->body->setLinearVelocity(btVector3(speed*analog_dir.x, old_velocity[1], speed*analog_dir.z));
+        phys->body->clearForces();
     }
     else
     {
-        body->setLinearVelocity(btVector3(0.0f, old_velocity[1], 0.0f));
-        body->clearForces();
+        phys->body->setLinearVelocity(btVector3(0.0f, old_velocity[1], 0.0f));
+        phys->body->clearForces();
     }
 
     /* Raycast to check if player is on ground */
@@ -76,11 +78,11 @@ void CharacterController::update(controller_data &data)
     /* Add a jump */
     if(!injump && ray_callback.hasHit() && data.c[0].A)
     {
-        btVector3 velocity = body->getLinearVelocity();
+        btVector3 velocity = phys->body->getLinearVelocity();
         velocity.setY(12.0f);
-        body->setLinearVelocity(velocity);
-        body->clearForces();
-        body->setWorldTransform(player_transform);
+        phys->body->setLinearVelocity(velocity);
+        phys->body->clearForces();
+        phys->body->setWorldTransform(player_transform);
         injump = true;
     }
 
@@ -103,7 +105,7 @@ void CharacterController::update(controller_data &data)
 
 glm::mat4 CharacterController::getViewMatrix()
 {
-    btTransform player_transform = body->getWorldTransform(); 
+    btTransform player_transform = phys->body->getWorldTransform(); 
     btVector3 player_position = player_transform.getOrigin();
     glm::vec3 player_pos(player_position[0], player_position[1], player_position[2]);
 

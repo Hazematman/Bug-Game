@@ -44,3 +44,15 @@ PhysMesh::PhysMesh(float mass, float radius, btDiscreteDynamicsWorld *dynWorld,
     body = new btRigidBody(ci);
     dynWorld->addRigidBody(body, group, bitmask);
 }
+
+PhysMesh::PhysMesh(float mass, btVector3 extents, btDiscreteDynamicsWorld *dynWorld, btVector3 origin, 
+                   uint32_t bitmask, uint32_t group)
+{
+    col_shape = new btBoxShape(extents);
+    motion_state = new btDefaultMotionState(btTransform(btQuaternion(0,0,0,1), origin));
+    btVector3 inertia;
+    col_shape->calculateLocalInertia(mass, inertia);
+    btRigidBody::btRigidBodyConstructionInfo ci(mass, motion_state, col_shape, inertia);
+    body = new btRigidBody(ci);
+    dynWorld->addRigidBody(body, group, bitmask);
+}

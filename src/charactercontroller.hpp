@@ -4,8 +4,9 @@
 #include <libdragon.h>
 #include <glm/glm.hpp>
 #include <bullet/btBulletDynamicsCommon.h>
+#include "gameobject.hpp"
 
-class CharacterController
+class CharacterController : public GameObject
 {
 public:
     CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos);
@@ -13,12 +14,8 @@ public:
     glm::mat4 getViewMatrix();
 
     float speed;
-    btRigidBody *body;
 private:
     btDiscreteDynamicsWorld *dyn_world;
-
-    btDefaultMotionState *motion_state;
-    btConvexShape *shape;
 
     /* player state */
     bool injump;

@@ -117,7 +117,21 @@ int col_count = 0;
 bool bulletCallback(btManifoldPoint &cp, const btCollisionObjectWrapper *obj1, int id1, int index1,
                                          const btCollisionObjectWrapper *obj2, int id2, int index2)
 {
-    col_count += 1;
+    GameObject *gobj1 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
+    GameObject *gobj2 = (GameObject*)obj2->getCollisionObject()->getUserPointer();
+
+    /* If either object doesn't have a user pointer exit early as
+       we only deal with collision of objects with user pointers */
+    if(gobj1 == NULL || gobj2 == NULL)
+    {
+        return false;
+    }
+
+    if((gobj1->type == GOBJ_PLAYER && gobj2->type == GOBJ_CRYSTAL) ||
+       (gobj1->type == GOBJ_CRYSTAL && gobj2->type == GOBJ_PLAYER))
+    {
+        col_count += 1;
+    }
     return false;
 }
 
@@ -213,16 +227,7 @@ int main(void)
     glm::vec3 start_pos = glm::vec3(0.0f, 0.0f, -3.0f);
     CharacterController character(dynamicsWorld, start_pos);
 
-    Model cube_model;
     Model cube2;
-
-    cube_model.verts = mesh_vertices;
-    cube_model.commands = mesh_commands;
-    cube_model.commands_size = mesh_commands_length;
-    cube_model.verts_size = mesh_vertices_length; 
-
-    cube_model.position = glm::vec3(0.0f, 0.0f, -3.0f);
-    cube_model.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
     cube2.verts = mesh_vertices;
     cube2.commands = mesh_commands;
@@ -232,7 +237,6 @@ int main(void)
     cube2.position = glm::vec3(0.0f, 1.0f, -3.0f);
     cube2.rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 
-    cube_model.initalize();
     cube2.initalize();
 
     float near_plane = 1.0f;
@@ -275,12 +279,6 @@ int main(void)
         cube2.position = glm::vec3(trans.getOrigin().getX(), trans.getOrigin().getY(), trans.getOrigin().getZ());
         auto rot = trans.getRotation();
         cube2.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
-
-        btTransform player_t = character.body->getWorldTransform();
-        btVector3 player_p = player_t.getOrigin();
-        rot = player_t.getRotation();
-        cube_model.position = glm::vec3(player_p[0], player_p[1], player_p[2]);
-        cube_model.rotation = glm::quat(rot[3], rot[0], rot[1], rot[2]);
 
         glm::mat4 view_mat = character.getViewMatrix();
         glm::mat4 pv = mat * view_mat;
@@ -330,7 +328,7 @@ int main(void)
         disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(255, 0, 0, 255)));
         disp_commands.push_back(ugfx_set_clip_ratio(2));
 
-        cube_model.draw(disp_commands);
+        character.draw(disp_commands);
 
         disp_commands.push_back(ugfx_set_prim_color(0, 0, PACK_RGBA32(0, 255, 0, 255)));
 
