@@ -17,6 +17,16 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     phys->body->setActivationState(DISABLE_DEACTIVATION);
     phys->body->setUserPointer(this);
 
+    
+    ghost_shape = new btBoxShape(btVector3(2,1,2));
+    ghost = new btPairCachingGhostObject();
+    ghost->setCollisionShape(ghost_shape);
+    ghost->setUserPointer(this);
+    ghost->setCollisionFlags(btCollisionObject::CF_NO_CONTACT_RESPONSE | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+    ghost->setWorldTransform(phys->body->getWorldTransform());
+
+    dyn_world->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+
     model = new Model;
 
     model->verts = mesh_vertices;
@@ -36,6 +46,8 @@ void CharacterController::update(controller_data &data)
 {
     btTransform player_transform = phys->body->getWorldTransform(); 
     btVector3 player_position = player_transform.getOrigin();
+
+    ghost->setWorldTransform(player_transform);
 
     float right_value = (float)data.c[0].x / 128.0f;
     float fwd_value = -(float)data.c[0].y / 128.0f;
@@ -101,6 +113,8 @@ void CharacterController::update(controller_data &data)
     glm::vec3 new_cam_pos = player_pos - (5.0f*player_fwd + glm::vec3(0.0f, -5.0f, 0.0f));
 
     camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
+
+    ghost->setWorldTransform(phys->body->getWorldTransform());
 }
 
 glm::mat4 CharacterController::getViewMatrix()
@@ -110,4 +124,26 @@ glm::mat4 CharacterController::getViewMatrix()
     glm::vec3 player_pos(player_position[0], player_position[1], player_position[2]);
 
     return glm::lookAt(camera_pos, player_pos, glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+bool CharacterController::bulletCallback(btManifoldPoint &cp, 
+                                         const btCollisionObjectWrapper *obj1, int id1, int index1,
+                                         const btCollisionObjectWrapper *obj2, int id2, int index2)
+{
+    GameObject *gobj1 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
+    GameObject *gobj2 = (GameObject*)obj2->getCollisionObject()->getUserPointer();
+
+    /* If either object doesn't have a user pointer exit early as
+       we only deal with collision of objects with user pointers */
+    if(gobj1 == NULL || gobj2 == NULL)
+    {
+        return false;
+    }
+
+    if((gobj1->type == GOBJ_PLAYER && gobj2->type == GOBJ_CRYSTAL) ||
+       (gobj1->type == GOBJ_CRYSTAL && gobj2->type == GOBJ_PLAYER))
+    {
+        got_crystal = true;
+    }
+    return false;
 }

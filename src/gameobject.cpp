@@ -15,7 +15,7 @@ GameObject *create_crystal(btDiscreteDynamicsWorld *dyn_world)
     out->model->initalize();
 
     out->phys = new PhysMesh(100.0f, 1.0f, dyn_world, btVector3(-20,10,8), 0xF, 0xF);
-    out->phys->body->setCollisionFlags(out->phys->body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
+    //out->phys->body->setCollisionFlags(out->phys->body->getCollisionFlags() | btCollisionObject::CF_CUSTOM_MATERIAL_CALLBACK);
     out->phys->body->setUserPointer(out);
 
     return out;

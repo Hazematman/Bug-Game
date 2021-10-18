@@ -112,27 +112,13 @@ void play_audio()
     }
 }
 
-int col_count = 0;
+CharacterController *global_character;
 
-bool bulletCallback(btManifoldPoint &cp, const btCollisionObjectWrapper *obj1, int id1, int index1,
-                                         const btCollisionObjectWrapper *obj2, int id2, int index2)
+bool bulletCallback(btManifoldPoint &cp, 
+                    const btCollisionObjectWrapper *obj1, int id1, int index1,
+                    const btCollisionObjectWrapper *obj2, int id2, int index2)
 {
-    GameObject *gobj1 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
-    GameObject *gobj2 = (GameObject*)obj2->getCollisionObject()->getUserPointer();
-
-    /* If either object doesn't have a user pointer exit early as
-       we only deal with collision of objects with user pointers */
-    if(gobj1 == NULL || gobj2 == NULL)
-    {
-        return false;
-    }
-
-    if((gobj1->type == GOBJ_PLAYER && gobj2->type == GOBJ_CRYSTAL) ||
-       (gobj1->type == GOBJ_CRYSTAL && gobj2->type == GOBJ_PLAYER))
-    {
-        col_count += 1;
-    }
-    return false;
+    return global_character->bulletCallback(cp, obj1, id1, index1, obj2, id2, index2);
 }
 
 int main(void)
@@ -167,9 +153,6 @@ int main(void)
     C1_WRITE_FCR31(fcr31);
 
     bool snow = false;
-
-    /* Set bullet callback function */
-    gContactAddedCallback = bulletCallback;
 
     ugfx_viewport_t viewport;
     my_ugfx_viewport_init(&viewport, 0, 0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -226,6 +209,10 @@ int main(void)
 
     glm::vec3 start_pos = glm::vec3(0.0f, 0.0f, -3.0f);
     CharacterController character(dynamicsWorld, start_pos);
+    global_character = &character;
+
+    /* Set bullet callback function */
+    gContactAddedCallback = bulletCallback;
 
     Model cube2;
 
@@ -272,6 +259,7 @@ int main(void)
             }
         }
 
+        character.got_crystal = false;
         dynamicsWorld->stepSimulation(1.0f / 30.f, 10);
 
         btTransform trans = cube_body->getWorldTransform();
@@ -357,7 +345,7 @@ int main(void)
 
 
         char buf[128];
-        sprintf(buf, "collisions = %d\n", col_count);
+        sprintf(buf, "collisions = %d\n", character.got_crystal);
         graphics_draw_text(disp, 20, 20, buf);
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
