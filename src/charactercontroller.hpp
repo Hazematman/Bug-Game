@@ -6,6 +6,14 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include "gameobject.hpp"
 
+enum Season
+{
+    SEASON_SPRING,
+    SEASON_SUMMER,
+    SEASON_FALL,
+    SEASON_WINTER,
+};
+
 class CharacterController : public GameObject
 {
 public:
@@ -17,6 +25,7 @@ public:
 
     float speed;
     bool got_crystal;
+    Season season;
 private:
     btDiscreteDynamicsWorld *dyn_world;
     btCollisionShape *ghost_shape;
@@ -24,6 +33,7 @@ private:
 
     /* player state */
     bool injump;
+    GameObject *carried;
 
     /* Camera position data */
     glm::vec3 camera_pos;

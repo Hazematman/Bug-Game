@@ -37,6 +37,10 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
 
     /* Set player state */
     injump = false;
+    carried = NULL;
+
+    /* Start in summer because its the best season */
+    season = SEASON_SUMMER;
 
     /* Set camera position */
     camera_pos = start_pos - glm::vec3(0.0f, -5.0f, -3.0f);
@@ -114,6 +118,29 @@ void CharacterController::update(controller_data &data)
 
     camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
 
+    if(carried != NULL && carried->type == GOBJ_CRYSTAL)
+    {
+        if(data.c[0].Z)
+        {
+            carried->phys->body->setWorldTransform(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
+            season = SEASON_WINTER;
+            carried = NULL;
+        }
+    }
+
+    if(carried != NULL)
+    {
+        btTransform player_transform = phys->body->getWorldTransform();
+        btVector3 origin = player_transform.getOrigin();
+        origin[1] += 2.0f;
+        player_transform.setOrigin(origin);
+
+
+        carried->phys->body->setLinearVelocity(btVector3(0,0,0));
+        carried->phys->body->clearForces();
+        carried->phys->body->setWorldTransform(player_transform);
+    }
+
     ghost->setWorldTransform(phys->body->getWorldTransform());
 }
 
@@ -140,10 +167,33 @@ bool CharacterController::bulletCallback(btManifoldPoint &cp,
         return false;
     }
 
-    if((gobj1->type == GOBJ_PLAYER && gobj2->type == GOBJ_CRYSTAL) ||
-       (gobj1->type == GOBJ_CRYSTAL && gobj2->type == GOBJ_PLAYER))
+    /* If this is the carried object exit early */
+    if(gobj1 == carried || gobj2 == carried)
     {
-        got_crystal = true;
+        return false;
+    }
+
+    GameObject *other_obj = (gobj1 == this) ? gobj2 : gobj1;
+
+    if(other_obj->type == GOBJ_CRYSTAL)
+    {
+        controller_data data;
+        controller_read(&data);
+
+        if(carried == NULL && data.c[0].B)
+        {
+            carried = other_obj; 
+            carried->phys->body->setCollisionFlags(carried->phys->body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+            btTransform player_transform = phys->body->getWorldTransform();
+            btVector3 origin = player_transform.getOrigin();
+            origin[1] += 2.0f;
+            player_transform.setOrigin(origin);
+
+            carried->phys->body->setLinearVelocity(btVector3(0,0,0));
+            carried->phys->body->clearForces();
+            carried->phys->body->setWorldTransform(player_transform);
+        }
     }
     return false;
 }
