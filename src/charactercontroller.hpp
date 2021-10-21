@@ -33,6 +33,7 @@ private:
 
     /* player state */
     bool injump;
+    bool interact_button;
     GameObject *carried;
 
     /* Camera position data */

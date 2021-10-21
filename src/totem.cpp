@@ -1,5 +1,6 @@
 #include "totem.hpp"
 #include "totem_mdl.hpp"
+#include "charactercontroller.hpp"
 
 Totem::Totem(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
 {
@@ -16,7 +17,7 @@ Totem::Totem(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
     phys->body->setAngularFactor(0.0f);
     phys->body->setUserPointer(this);
 
-    ghost_shape = new btBoxShape(btVector3(2,1,2));
+    ghost_shape = new btBoxShape(btVector3(2,3.5f,2));
     ghost = new btPairCachingGhostObject();
     ghost->setCollisionShape(ghost_shape);
     ghost->setUserPointer(this);
@@ -30,9 +31,49 @@ Totem::Totem(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
     collision = 0;
 }
 
+void Totem::update(float dt)
+{
+    /* Totem doesn't do anything based on dt */
+    UNUSED(dt);
+
+    if(carried)
+    {
+        btTransform totem_transform = phys->body->getWorldTransform();
+        btVector3 origin = totem_transform.getOrigin();
+        origin[1] += 7.0f;
+        totem_transform.setOrigin(origin);
+
+        carried->phys->body->setLinearVelocity(btVector3(0,0,0));
+        carried->phys->body->clearForces();
+        carried->phys->body->setWorldTransform(totem_transform);
+    }
+}
+
 bool Totem::collide(btManifoldPoint &cp, 
                     const btCollisionObjectWrapper *obj1, int id1, int index1)
 {
-    collision += 1;
+    GameObject *gobj = (GameObject*)obj1->getCollisionObject()->getUserPointer();
+
+    /* If we already carrying an object exit early */
+    if(carried)
+        return false;
+
+    if(gobj->type == GOBJ_CRYSTAL)
+    {
+        carried = gobj; 
+        carried->phys->body->setCollisionFlags(carried->phys->body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+        btTransform totem_transform = phys->body->getWorldTransform();
+        btVector3 origin = totem_transform.getOrigin();
+        origin[1] += 7.0f;
+        totem_transform.setOrigin(origin);
+
+        carried->phys->body->setLinearVelocity(btVector3(0,0,0));
+        carried->phys->body->clearForces();
+        carried->phys->body->setWorldTransform(totem_transform);
+
+        global_character->season = SEASON_WINTER;
+    }
+    
     return false;
 }

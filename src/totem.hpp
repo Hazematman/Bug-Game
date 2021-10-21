@@ -8,6 +8,7 @@ public:
     Totem(btVector3 origin, btDiscreteDynamicsWorld *dyn_world);
     virtual bool collide(btManifoldPoint &cp, 
                          const btCollisionObjectWrapper *obj1, int id1, int index1);
+    virtual void update(float dt);
 
     GameObject *carried;
 private:

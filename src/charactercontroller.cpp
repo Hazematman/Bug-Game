@@ -39,6 +39,7 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     /* Set player state */
     injump = false;
     carried = NULL;
+    interact_button = false;
 
     /* Start in summer because its the best season */
     season = SEASON_SUMMER;
@@ -119,13 +120,21 @@ void CharacterController::update(controller_data &data)
 
     camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
 
+    if(interact_button && !data.c[0].B)
+    {
+        interact_button = false;
+    }
+
     if(carried != NULL && carried->type == GOBJ_CRYSTAL)
     {
-        if(data.c[0].Z)
+        if(!interact_button && data.c[0].B)
         {
-            carried->phys->body->setWorldTransform(btTransform(btQuaternion(0,0,0,1), btVector3(0,0,0)));
-            season = SEASON_WINTER;
+            carried->phys->body->setLinearVelocity(10.0f*(fwd+btVector3(0.0f, 1.0f, 0.0f)));
+            carried->phys->body->setCollisionFlags(carried->phys->body->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
             carried = NULL;
+
+            interact_button = true;
         }
     }
 
@@ -180,7 +189,7 @@ bool CharacterController::collide(btManifoldPoint &cp,
         controller_data data;
         controller_read(&data);
 
-        if(carried == NULL && data.c[0].B)
+        if(!interact_button && carried == NULL && data.c[0].B)
         {
             carried = other_obj; 
             carried->phys->body->setCollisionFlags(carried->phys->body->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
@@ -193,6 +202,8 @@ bool CharacterController::collide(btManifoldPoint &cp,
             carried->phys->body->setLinearVelocity(btVector3(0,0,0));
             carried->phys->body->clearForces();
             carried->phys->body->setWorldTransform(player_transform);
+
+            interact_button = true;
         }
     }
     return false;

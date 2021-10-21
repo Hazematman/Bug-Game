@@ -261,6 +261,7 @@ int main(void)
         controller_read(&data);
 
         character.update(data);
+        totem.update(dt);
 
         if(character.season == SEASON_WINTER)
         {
