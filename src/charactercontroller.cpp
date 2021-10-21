@@ -8,6 +8,7 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     dyn_world(dyn_world)
 {
     this->type = GOBJ_PLAYER;
+    this->can_collide = true;
     float mass = 100.0f;
     this->speed = 10.0f;
 
@@ -153,12 +154,11 @@ glm::mat4 CharacterController::getViewMatrix()
     return glm::lookAt(camera_pos, player_pos, glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
-bool CharacterController::bulletCallback(btManifoldPoint &cp, 
-                                         const btCollisionObjectWrapper *obj1, int id1, int index1,
-                                         const btCollisionObjectWrapper *obj2, int id2, int index2)
+bool CharacterController::collide(btManifoldPoint &cp, 
+                                  const btCollisionObjectWrapper *obj1, int id1, int index1)
 {
-    GameObject *gobj1 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
-    GameObject *gobj2 = (GameObject*)obj2->getCollisionObject()->getUserPointer();
+    GameObject *gobj1 = this;
+    GameObject *gobj2 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
 
     /* If either object doesn't have a user pointer exit early as
        we only deal with collision of objects with user pointers */

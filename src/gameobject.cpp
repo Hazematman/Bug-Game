@@ -6,6 +6,7 @@ GameObject *create_crystal(btDiscreteDynamicsWorld *dyn_world)
     GameObject *out = new GameObject;
 
     out->type = GOBJ_CRYSTAL;
+    out->can_collide = false;
     out->model = new Model;
 
     out->model->verts = sphere_verts;

@@ -102,7 +102,7 @@ def export_model(data, input_file, output_name):
 
         for face in data[1][material]:
             for v in face:
-                model_verts.append(data[0][v])
+                model_verts.append(data[0][v][:])
 
             face_offset = face_index % 10
             if (face_offset) == 0:
@@ -113,8 +113,10 @@ def export_model(data, input_file, output_name):
 
     for vert in model_verts:
         model_vert_string += "make_vertex_c({}, {}, {}, {}, {}, {}, {}, {}, {}),\n".format(
-                             vert[S64_VERT_X], vert[S64_VERT_Z], -1*vert[S64_VERT_Y], vert[S64_VERT_U], vert[S64_VERT_V],
-                             int(vert[S64_VERT_R]*255), int(vert[S64_VERT_G]*255), int(vert[S64_VERT_B]*255), 255)
+                             vert[S64_VERT_X], vert[S64_VERT_Z], -1*vert[S64_VERT_Y], 
+                             vert[S64_VERT_U], vert[S64_VERT_V],
+                             int(vert[S64_VERT_R]*255), int(vert[S64_VERT_G]*255), 
+                             int(vert[S64_VERT_B]*255), 255)
 
     model_display_list += "ugfx_finalize(),"
 

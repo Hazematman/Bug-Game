@@ -19,9 +19,9 @@ class CharacterController : public GameObject
 public:
     CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos);
     void update(controller_data &data);
+    virtual bool collide(btManifoldPoint &cp, 
+                         const btCollisionObjectWrapper *obj1, int id1, int index1);
     glm::mat4 getViewMatrix();
-    bool bulletCallback(btManifoldPoint &cp, const btCollisionObjectWrapper *obj1, int id1, int index1,
-                        const btCollisionObjectWrapper *obj2, int id2, int index2);
 
     float speed;
     bool got_crystal;

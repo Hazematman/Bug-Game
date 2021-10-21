@@ -19,8 +19,10 @@ $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level_2.o \
 	$(BUILD_DIR)/sphere.o \
 	$(BUILD_DIR)/snow.o \
+	$(BUILD_DIR)/totem_mdl.o \
 	$(BUILD_DIR)/gameobject.o \
 	$(BUILD_DIR)/charactercontroller.o \
+	$(BUILD_DIR)/totem.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \
 	$(BUILD_DIR)/physmesh.o \

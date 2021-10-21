@@ -18,6 +18,7 @@ extern "C" {
 #include "physmesh.hpp"
 #include "charactercontroller.hpp"
 #include "gameobject.hpp"
+#include "totem.hpp"
 
 #include "test_level_2.hpp"
 #include "snow.hpp"
@@ -118,7 +119,21 @@ bool bulletCallback(btManifoldPoint &cp,
                     const btCollisionObjectWrapper *obj1, int id1, int index1,
                     const btCollisionObjectWrapper *obj2, int id2, int index2)
 {
-    return global_character->bulletCallback(cp, obj1, id1, index1, obj2, id2, index2);
+    GameObject *gobj1 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
+    GameObject *gobj2 = (GameObject*)obj2->getCollisionObject()->getUserPointer();
+    if(gobj1 == NULL || gobj2 == NULL)
+        return false;
+    if(gobj1 == gobj2)
+        return false;
+
+    bool ret_value = false;
+    if(gobj1 != NULL && gobj1->can_collide)
+        ret_value |= gobj1->collide(cp, obj2, id2, index2);
+
+    if(gobj2 != NULL && gobj2->can_collide)
+        ret_value |= gobj2->collide(cp, obj1, id1, index1);
+
+    return false;
 }
 
 int main(void)
@@ -208,6 +223,9 @@ int main(void)
     glm::vec3 start_pos = glm::vec3(0.0f, 0.0f, -3.0f);
     CharacterController character(dynamicsWorld, start_pos);
     global_character = &character;
+
+
+    Totem totem(btVector3(-80.0f, -2.0f, -10.0f), dynamicsWorld);
 
     /* Set bullet callback function */
     gContactAddedCallback = bulletCallback;
@@ -316,6 +334,8 @@ int main(void)
 
         cube2.draw(disp_commands);
 
+        totem.draw(disp_commands);
+
         disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
         disp_commands.push_back(ugfx_push_commands(0, test_level_2_commands, test_level_2_commands_length));
 
@@ -339,7 +359,7 @@ int main(void)
 
 
         char buf[128];
-        sprintf(buf, "collisions = %d\n", character.got_crystal);
+        sprintf(buf, "collisions = %d\n", totem.collision);
         graphics_draw_text(disp, 20, 20, buf);
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);

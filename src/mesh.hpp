@@ -10,8 +10,8 @@ constexpr ugfx_vertex_t make_vertex_n(
     out.x = float_to_fixed(vx, 5);
     out.y = float_to_fixed(vy, 5);
     out.z = float_to_fixed(vz, 5);
-    out.s = float_to_fixed((vs*32), 6);
-    out.t = float_to_fixed((vt*32), 6);
+    out.s = float_to_fixed((vs*32.0f), 6);
+    out.t = float_to_fixed((vt*32.0f), 6);
     out.attr.normal.x = nx;
     out.attr.normal.y = ny;
     out.attr.normal.z = nz;
@@ -27,8 +27,8 @@ constexpr ugfx_vertex_t make_vertex_c(
     out.x = float_to_fixed(vx, 5);
     out.y = float_to_fixed(vy, 5);
     out.z = float_to_fixed(vz, 5);
-    out.s = float_to_fixed((vs*32), 6);
-    out.t = float_to_fixed((vt*32), 6);
+    out.s = float_to_fixed((vs*32.0f), 6);
+    out.t = float_to_fixed((vt*32.0f), 6);
     out.attr.color.r = vr;
     out.attr.color.g = vg;
     out.attr.color.b = vb;
