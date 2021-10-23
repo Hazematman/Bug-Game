@@ -12,8 +12,22 @@ $(ROMNAME).z64: LDFLAGS=-g -L$(N64_ROOTDIR)/mips64-elf/lib -ldragon -lc -lm -ldr
 all: $(ROMNAME).z64
 
 $(BUILD_DIR)/$(ROMNAME).dfs: \
-	filesystem/Casio_SA_76_Piano1.wav64 \
-
+	filesystem/CasioSA76_Vibraphone_FSharp4.wav64 \
+	filesystem/CasioSA76_Vibraphone_C3.wav64 \
+	filesystem/CasioSA76_Sax_C2.wav64 \
+	filesystem/CasioSA76_Vibraphone_FSharp3.wav64 \
+	filesystem/CasioSA76_HH_D2.wav64 \
+	filesystem/CasioSA76_Sax_FSharp2.wav64 \
+	filesystem/CasioSA76_Vibraphone_C4.wav64 \
+	filesystem/CasioSA76_Bass_C2.wav64 \
+	filesystem/CasioSA76_Tabla1_E2.wav64 \
+	filesystem/CasioSA76_Tabla2_DSharp2.wav64 \
+	filesystem/CasioSA76_Bass_FSharp2.wav64 \
+	filesystem/CasioSA76_Vibraphone_C5.wav64 \
+	filesystem/CasioSA76_Wood_C3.wav64 \
+	filesystem/CasioSA76_Sax_C3.wav64 \
+	filesystem/CasioSA76_Wood_E3.wav64 \
+	
 $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level.o \
 	$(BUILD_DIR)/test_level_2.o \

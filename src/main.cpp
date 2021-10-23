@@ -23,10 +23,8 @@ extern "C" {
 #include "test_level_2.hpp"
 #include "snow.hpp"
 
-
-wav64_t Casio_SA_76_Piano1;
 #include "midstream.hpp"
-#include "out.hpp"
+#include "test2.hpp"
 
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
@@ -158,7 +156,7 @@ int main(void)
     for(int i = 0; i < 16; i++)
         mixer_ch_set_limits(i, 0, 128000, 0);
 
-    wav64_open(&Casio_SA_76_Piano1, "Casio_SA_76_Piano1.wav64");
+    test_song_load();
 
     mixer_add_event(0, mixer_event, NULL);
 
