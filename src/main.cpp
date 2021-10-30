@@ -26,6 +26,8 @@ extern "C" {
 #include "midstream.hpp"
 #include "test2.hpp"
 
+#include "beetleBoi.cpp"
+
 #define DISPLAY_WIDTH 320
 #define DISPLAY_HEIGHT 240
 
@@ -240,6 +242,10 @@ int main(void)
 
     cube2.initalize();
 
+
+    Model bug;
+    bug.initalize(&beetleBoi_def); 
+
     float near_plane = 1.0f;
     float far_plane = 100.0f;
 
@@ -251,8 +257,10 @@ int main(void)
     uint32_t prev_time = (uint32_t)get_ticks();
     float dt = 0.16f;
     controller_data data;
+    int frame = 0;
     while(1)
     {
+        frame++;
         /* Play audio */
         play_audio();
 
@@ -342,6 +350,8 @@ int main(void)
             disp_commands.push_back(ugfx_push_commands(0, snow_commands, snow_commands_length));
 
         crystal->draw(disp_commands);
+
+        bug.draw(disp_commands, frame);
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());

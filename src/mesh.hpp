@@ -2,6 +2,43 @@
 #define MESH_HPP
 #include <libdragon.h>
 
+struct MeshDef
+{
+    float position[3];
+    ugfx_vertex_t *verts;
+    ugfx_command_t *commands; 
+    uint32_t num_commands;
+    ugfx_matrix_t matrix;
+};
+
+struct AnimationTrans
+{
+    float position[3];
+    float rotation[3];
+    float scale[3];
+};
+
+struct Animation
+{
+    int keyframe;
+    AnimationTrans *trans;
+};
+
+struct AnimationGroup
+{
+    const char *name;
+    Animation *animations;
+    uint32_t num_animations;
+};
+
+struct ModelDef
+{
+    MeshDef *meshes;
+    uint32_t num_meshes;
+    AnimationGroup *animation_group;
+    uint32_t num_animations;
+};
+
 constexpr ugfx_vertex_t make_vertex_n(
         float vx, float vy, float vz, 
         float vs, float vt, int nx, int ny, int nz, int va)

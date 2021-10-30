@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "internal.hpp"
+#include "mesh.hpp"
 
 class Model
 {
@@ -18,7 +19,10 @@ public:
     ugfx_matrix_t matrix;
 
     void initalize();
-    void draw(UgfxCommandBuffer &command_queue);
+    void initalize(ModelDef *model_def);
+    void draw(UgfxCommandBuffer &command_queue, int frame=0);
+private:
+    ModelDef *model_def;
 };
 
 #endif
