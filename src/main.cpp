@@ -351,7 +351,7 @@ int main(void)
 
         crystal->draw(disp_commands);
 
-        bug.draw(disp_commands, frame);
+        bug.draw(disp_commands, dt);
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());

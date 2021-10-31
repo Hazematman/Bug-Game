@@ -20,9 +20,10 @@ public:
 
     void initalize();
     void initalize(ModelDef *model_def);
-    void draw(UgfxCommandBuffer &command_queue, int frame=0);
+    void draw(UgfxCommandBuffer &command_queue, float dt=0);
 private:
     ModelDef *model_def;
+    float time;
 };
 
 #endif
