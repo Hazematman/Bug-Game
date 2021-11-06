@@ -1,8 +1,7 @@
 #include <libdragon.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include "charactercontroller.hpp"
-
-#include "cube.hpp"
+#include "beetleBoi.cpp"
 
 CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos) :
     dyn_world(dyn_world)
@@ -29,12 +28,8 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     dyn_world->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 
     model = new Model;
-
-    model->verts = mesh_vertices;
-    model->commands = mesh_commands;
-    model->commands_size = mesh_commands_length;
-    model->verts_size = mesh_vertices_length; 
-    model->initalize();
+    model->initalize(&beetleBoi_def);
+    model->scale = glm::vec3(0.3f, 0.3f, 0.3f);
 
     /* Set player state */
     injump = false;
@@ -81,6 +76,9 @@ void CharacterController::update(controller_data &data)
     }
     else
     {
+        // TODO replace this with animation API once its developed
+        model->time = 0.0f;
+
         phys->body->setLinearVelocity(btVector3(0.0f, old_velocity[1], 0.0f));
         phys->body->clearForces();
     }

@@ -15,15 +15,17 @@ public:
     size_t commands_size;
     uint32_t num_commands;
     glm::vec3 position;
+    glm::vec3 scale;
     glm::quat rotation;
     ugfx_matrix_t matrix;
+
+    float time;
 
     void initalize();
     void initalize(ModelDef *model_def);
     void draw(UgfxCommandBuffer &command_queue, float dt=0);
 private:
     ModelDef *model_def;
-    float time;
 };
 
 #endif

@@ -22,7 +22,7 @@ GameObject *create_crystal(btDiscreteDynamicsWorld *dyn_world)
     return out;
 }
 
-void GameObject::draw(UgfxCommandBuffer &command_queue)
+void GameObject::draw(UgfxCommandBuffer &command_queue, float dt)
 {
     if(phys != NULL)
     {
@@ -35,6 +35,6 @@ void GameObject::draw(UgfxCommandBuffer &command_queue)
 
     if(model != NULL)
     {
-        model->draw(command_queue);
+        model->draw(command_queue, dt);
     }
 }

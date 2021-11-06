@@ -13,7 +13,7 @@ enum GameObjectType
 class GameObject
 {
 public:
-    void draw(UgfxCommandBuffer &command_queue);
+    void draw(UgfxCommandBuffer &command_queue, float dt=0);
 
     virtual bool collide(btManifoldPoint &cp, 
                          const btCollisionObjectWrapper *obj1, int id1, int index1) {return false;}
