@@ -61,8 +61,8 @@ void Model::draw(UgfxCommandBuffer &command_queue, float dt)
 
             glm::mat4 offset_mat_inv = glm::translate(glm::mat4(1.0f), -mesh_pos);
             glm::mat4 offset_mat = glm::translate(glm::mat4(1.0f), mesh_pos);
-            glm::quat rot(glm::vec3(trans[i].rotation[0], trans[i].rotation[1], trans[i].rotation[2]));
-            glm::quat rot2(glm::vec3(trans2[i].rotation[0], trans2[i].rotation[1], trans2[i].rotation[2]));
+            glm::quat rot(trans[i].rotation[3], trans[i].rotation[0], trans[i].rotation[1], trans[i].rotation[2]);
+            glm::quat rot2(trans2[i].rotation[3], trans2[i].rotation[0], trans2[i].rotation[1], trans2[i].rotation[2]);
             rot = glm::mix(glm::normalize(rot), glm::normalize(rot2), lerp_time);
 
             glm::mat4 out_mat = model_mat * rot_mat * scale * bone_offset_mat * offset_mat * glm::mat4(rot) * offset_mat_inv;

@@ -2,7 +2,9 @@
 import sys
 import argparse
 import os
+import math
 from PIL import Image
+from scipy.spatial.transform import Rotation as scirot
 
 description = "n64_mdl_parse"
 
@@ -161,7 +163,7 @@ def export_model(model_data, input_file, output_name):
 
         mesh_def_strings += "{{{{{x}, {y}, {z}}}, {file}_{mesh}_verts, {file}_{mesh}_commands, sizeof({file}_{mesh}_commands) / sizeof(*{file}_{mesh}_commands)}},\n".format(
                             file=file_name, mesh=mesh_name, 
-                            x=meshes[mesh][0][0], y=meshes[mesh][0][2], z=-meshes[mesh][0][1])
+                            x=meshes[mesh][0][0], y=meshes[mesh][0][2], z=-1*meshes[mesh][0][1])
 
 
 
@@ -202,9 +204,17 @@ uint32_t {file}_{mesh}_commands_length = sizeof({file}_{mesh}_commands) / sizeof
             animation_name = "{file}_{animation}_{keyframe}_trans".format(file=file_name, animation=animation, keyframe=frame[0])
             animationTrans_string += "AnimationTrans {}[] = {{".format(animation_name)
             for trans in frame[1:]:
-                animationTrans_string += "{{{},{},{},{},{},{},{},{},{}}},".format(
+                x_rot = scirot.from_euler('x', trans[4])
+                y_rot = scirot.from_euler('y', trans[5])
+                z_rot = scirot.from_euler('z', trans[6])
+                # Calculate rotation quaternion
+                #original_rotation = x_rot * y_rot * z_rot
+                original_rotation = scirot.from_euler('xyz', [trans[4], trans[5], trans[6]])
+                new_rot = scirot.from_euler('X', -90, degrees=True) * original_rotation * scirot.from_euler('X', 90, degrees=True)
+                quat = new_rot.as_quat()
+                animationTrans_string += "{{{},{},{},{},{},{},{},{},{},{}}},".format(
                                                                                   trans[1], trans[3], -trans[2],
-                                                                                  trans[4], trans[6], -trans[5],
+                                                                                  quat[0], quat[1], quat[2], quat[3],
                                                                                   trans[7], trans[9], trans[8])
             animationTrans_string += "};\n"
             frame_strings += "{{{keyframe}, {trans}}},".format(keyframe=frame[0], trans=animation_name)

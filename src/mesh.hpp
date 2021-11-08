@@ -14,7 +14,7 @@ struct MeshDef
 struct AnimationTrans
 {
     float position[3];
-    float rotation[3];
+    float rotation[4];
     float scale[3];
 };
 
