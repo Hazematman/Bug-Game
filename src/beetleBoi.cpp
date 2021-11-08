@@ -1609,5 +1609,6 @@ beetleBoi_meshes,
 sizeof(beetleBoi_meshes) / sizeof(*beetleBoi_meshes),
 beetleBoi_groups,
 sizeof(beetleBoi_groups) / sizeof(*beetleBoi_groups),
+-3.0742, 1.7577, -1.2364, 11.4733, -5.7754, 5.7754,
 };
 

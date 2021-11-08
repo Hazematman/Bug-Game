@@ -20,6 +20,12 @@ S64_VERT_B = 8
 S64_VERT_U = 9
 S64_VERT_V = 10
 
+def min(x, y):
+    return x if x < y else y
+
+def max(x, y):
+    return x if x > y else y
+
 def convert(inpu, inlow, inhigh, outlow, outhigh):
     return int(((inpu-inlow) / (inhigh-inlow)) * (outhigh - outlow) + outlow)
 
@@ -105,6 +111,12 @@ def export_model(model_data, input_file, output_name):
     material_strings = ""
     materials = []
     mesh_def_strings = "MeshDef {}_meshes[] ={{\n".format(file_name)
+    min_x = 1*1000
+    min_y = 1*1000
+    min_z = 1*1000
+    max_x = -1*1000
+    max_y = -1*1000
+    max_z = -1*1000
     for mesh in meshes:
         data = meshes[mesh][1:]
         mesh_name = mesh.replace(".", "_")
@@ -168,6 +180,12 @@ def export_model(model_data, input_file, output_name):
 
 
         for vert in model_verts:
+            min_x = min(min_x, vert[S64_VERT_X])
+            max_x = max(max_x, vert[S64_VERT_X])
+            min_y = min(min_y, vert[S64_VERT_Z])
+            max_y = max(max_y, vert[S64_VERT_Z])
+            min_z = min(min_z, -1*vert[S64_VERT_Y])
+            max_z = max(max_z, -1*vert[S64_VERT_Y])
             model_vert_string += "make_vertex_c({}, {}, {}, {}, {}, {}, {}, {}, {}),\n".format(
                                  vert[S64_VERT_X], vert[S64_VERT_Z], -1*vert[S64_VERT_Y], 
                                  vert[S64_VERT_U], vert[S64_VERT_V],
@@ -244,12 +262,14 @@ ModelDef {mesh}_def = {{
 sizeof({mesh}_meshes) / sizeof(*{mesh}_meshes),
 {mesh}_groups,
 sizeof({mesh}_groups) / sizeof(*{mesh}_groups),
+{min_x}, {max_x}, {min_y}, {max_y}, {min_z}, {max_z},
 }};
 
 """.format(
         mesh=file_name, materials=material_strings, meshes=meshes_output_string, 
         animations=frame_strings, animation_group=animation_group_string, mesh_def=mesh_def_strings,
-        animation_trans=animationTrans_string)
+        animation_trans=animationTrans_string,
+        min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y, min_z=min_z, max_z=max_z)
     file = open(output_name + ".cpp", "w")
     file.write(output_string)
     file.close()

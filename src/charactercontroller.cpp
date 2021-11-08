@@ -11,14 +11,22 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     float mass = 100.0f;
     this->speed = 10.0f;
 
-    phys = new PhysMesh(mass, btVector3(1,1,1), dyn_world, btVector3(start_pos.x, start_pos.y, start_pos.z),
+    model = new Model;
+    model->initalize(&beetleBoi_def);
+    model->scale = glm::vec3(0.3f, 0.3f, 0.3f);
+
+    float x_size = (beetleBoi_def.max_x - beetleBoi_def.min_x)*model->scale.x;
+    float y_size = (beetleBoi_def.max_y - beetleBoi_def.min_y)*model->scale.y;
+    float z_size = (beetleBoi_def.max_z - beetleBoi_def.min_z)*model->scale.z;
+
+    phys = new PhysMesh(mass, btVector3(x_size/2,y_size/2,z_size/2), dyn_world, btVector3(start_pos.x, start_pos.y, start_pos.z),
                         0xf, 0xf);
     phys->body->setAngularFactor(0.0f);
     phys->body->setActivationState(DISABLE_DEACTIVATION);
     phys->body->setUserPointer(this);
 
     
-    ghost_shape = new btBoxShape(btVector3(2,1,2));
+    ghost_shape = new btBoxShape(btVector3((x_size/2) + 1,(y_size/2), (z_size/2) + 1));
     ghost = new btPairCachingGhostObject();
     ghost->setCollisionShape(ghost_shape);
     ghost->setUserPointer(this);
@@ -26,10 +34,6 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
     ghost->setWorldTransform(phys->body->getWorldTransform());
 
     dyn_world->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
-
-    model = new Model;
-    model->initalize(&beetleBoi_def);
-    model->scale = glm::vec3(0.3f, 0.3f, 0.3f);
 
     /* Set player state */
     injump = false;
@@ -84,7 +88,7 @@ void CharacterController::update(controller_data &data)
     }
 
     /* Raycast to check if player is on ground */
-    btVector3 check_position = player_position + btVector3(0, -2, 0);
+    btVector3 check_position = player_position + btVector3(0, -10, 0);
     btCollisionWorld::ClosestRayResultCallback ray_callback(player_position, check_position);
     /* Only check for collisions with the ground */
     ray_callback.m_collisionFilterMask = 2;

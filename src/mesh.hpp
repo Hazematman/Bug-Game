@@ -37,6 +37,7 @@ struct ModelDef
     uint32_t num_meshes;
     AnimationGroup *animation_group;
     uint32_t num_animations;
+    float min_x, max_x, min_y, max_y, min_z, max_z;
 };
 
 constexpr ugfx_vertex_t make_vertex_n(

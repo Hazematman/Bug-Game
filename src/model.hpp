@@ -18,14 +18,13 @@ public:
     glm::vec3 scale;
     glm::quat rotation;
     ugfx_matrix_t matrix;
+    ModelDef *model_def;
 
     float time;
 
     void initalize();
     void initalize(ModelDef *model_def);
     void draw(UgfxCommandBuffer &command_queue, float dt=0);
-private:
-    ModelDef *model_def;
 };
 
 #endif
