@@ -258,11 +258,6 @@ int main(void)
         /* Play audio */
         play_audio();
 
-        controller_read(&data);
-
-        character.update(data);
-        totem.update(dt);
-
         if(character.season == SEASON_WINTER)
         {
             snow_mesh.body->setCollisionFlags(snow_mesh.body->getCollisionFlags() & ~btCollisionObject::CF_NO_CONTACT_RESPONSE);
@@ -274,6 +269,11 @@ int main(void)
 
         character.got_crystal = false;
         dynamicsWorld->stepSimulation(1.0f / 30.f, 10);
+
+        controller_read(&data);
+
+        character.update(data);
+        totem.update(dt);
 
         btTransform trans = cube_body->getWorldTransform();
 
