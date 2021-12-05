@@ -37,6 +37,7 @@ $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/gameobject.o \
 	$(BUILD_DIR)/charactercontroller.o \
 	$(BUILD_DIR)/totem.o \
+	$(BUILD_DIR)/mushroom.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \
 	$(BUILD_DIR)/physmesh.o \

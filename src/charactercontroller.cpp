@@ -88,7 +88,7 @@ void CharacterController::update(controller_data &data)
     }
 
     /* Raycast to check if player is on ground */
-    btVector3 check_position = player_position + btVector3(0, -10, 0);
+    btVector3 check_position = player_position + btVector3(0, -4, 0);
     btCollisionWorld::ClosestRayResultCallback ray_callback(player_position, check_position);
     /* Only check for collisions with the ground */
     ray_callback.m_collisionFilterMask = 2;
@@ -208,5 +208,24 @@ bool CharacterController::collide(btManifoldPoint &cp,
             interact_button = true;
         }
     }
+    else if(other_obj->type == GOBJ_MUSHROOM)
+    {
+        btTransform &other_trans = other_obj->phys->body->getWorldTransform();
+        btVector3 &other_pos = other_trans.getOrigin();
+        btTransform &my_trans = phys->body->getWorldTransform();
+        btVector3 &my_pos = my_trans.getOrigin();
+
+        float y_size = (model->model_def->max_y - model->model_def->min_y)*model->scale.y;
+        float y_origin = model->scale.y*model->model_def->min_y + (y_size/2);
+        if(other_pos[1] < (my_pos[1]-y_origin))
+        { 
+            btVector3 velocity = phys->body->getLinearVelocity();
+            velocity.setY(20.0f);
+            phys->body->setLinearVelocity(velocity);
+            phys->body->clearForces();
+            injump = true;
+        }
+    }
+
     return false;
 }

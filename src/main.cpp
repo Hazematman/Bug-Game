@@ -19,6 +19,7 @@ extern "C" {
 #include "charactercontroller.hpp"
 #include "gameobject.hpp"
 #include "totem.hpp"
+#include "mushroom.hpp"
 
 #include "test_level_2.hpp"
 #include "snow.hpp"
@@ -224,6 +225,7 @@ int main(void)
 
 
     Totem totem(btVector3(-80.0f, -2.0f, -10.0f), dynamicsWorld);
+    Mushroom mush(btVector3(-40.0f, -1.0f, -12.0f), dynamicsWorld);
 
     /* Set bullet callback function */
     gContactAddedCallback = bulletCallback;
@@ -336,6 +338,7 @@ int main(void)
         cube2.draw(disp_commands);
 
         totem.draw(disp_commands);
+        mush.draw(disp_commands);
 
         disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
         disp_commands.push_back(ugfx_push_commands(0, test_level_2_commands, test_level_2_commands_length));
@@ -360,7 +363,7 @@ int main(void)
 
 
         char buf[128];
-        sprintf(buf, "collisions = %d\n", totem.collision);
+        sprintf(buf, "Jump height = %f\n", character.model->position[1]);
         graphics_draw_text(disp, 20, 20, buf);
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);

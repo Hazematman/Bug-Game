@@ -5,7 +5,7 @@
 Totem::Totem(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
 {
     type = GOBJ_TOTEM;
-    model = new Model[10];
+    model = new Model;
 
     model->verts = totem_mdl_verts;
     model->commands = totem_mdl_commands;
