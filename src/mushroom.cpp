@@ -1,18 +1,12 @@
 #include "mushroom.hpp"
-#include "cube.hpp"
+#include "shroom.cpp"
 
 Mushroom::Mushroom(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
 {
     type = GOBJ_MUSHROOM;
     model = new Model;
 
-    model->verts = mesh_vertices;
-    model->commands = mesh_commands;
-    model->verts_size = mesh_vertices_length;
-    model->commands_size = mesh_commands_length;
-    model->position = glm::vec3(origin[0], origin[1], origin[2]);
-    model->rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-    model->initalize();
+    model->initalize(&shroom_def);
 
     phys = new PhysMesh(0.0f, btVector3(1,1,1), dyn_world, origin, 0xF, 0xF);
     phys->body->setAngularFactor(0.0f);

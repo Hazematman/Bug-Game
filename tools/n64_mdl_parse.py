@@ -131,6 +131,7 @@ def export_model(model_data, input_file, output_name):
                 # Go through all the materials and convert their textures into
                 # an N64 compatible format like RGBA_5551
                 image = Image.open("{}/{}.png".format(path_name, material))
+                image = image.convert("RGBA")
                 width, height = image.size
                 material_strings += "const uint16_t {}_{}[]  __attribute__ ((aligned (64))) = \n{{\n".format(file_name, material_name)
                 for y in range(height):
