@@ -9,6 +9,9 @@ public:
     virtual bool collide(btManifoldPoint &cp, 
                          const btCollisionObjectWrapper *obj1, int id1, int index1);
     virtual void update(float dt);
+
+    bool jump;
+    float anim_time;
 private:
     btDiscreteDynamicsWorld *dyn_world;
     btCollisionShape *ghost_shape;

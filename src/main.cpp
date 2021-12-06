@@ -276,6 +276,7 @@ int main(void)
 
         character.update(data);
         totem.update(dt);
+        mush.update(dt);
 
         btTransform trans = cube_body->getWorldTransform();
 
@@ -366,8 +367,11 @@ int main(void)
         sprintf(buf, "Jump height = %f\n", character.model->position[1]);
         graphics_draw_text(disp, 20, 20, buf);
 
-        sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
+        sprintf(buf, "mush %f %f %f\n", mush.model->scale.x, mush.model->scale.y, mush.model->scale.z);
         graphics_draw_text(disp, 20, 30, buf);
+
+        sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
+        graphics_draw_text(disp, 20, 40, buf);
 
         /* Play audio again before we wait for vsync */
         play_audio();

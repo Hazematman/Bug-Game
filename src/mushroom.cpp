@@ -1,6 +1,20 @@
 #include "mushroom.hpp"
 #include "shroom.cpp"
 
+struct frame_data
+{
+    float time;
+    glm::vec3 scale;
+};
+
+frame_data frames[] =
+{
+    {0.0f, glm::vec3(1.0f, 1.0f, 1.0f)},
+    {0.1f, glm::vec3(1.5f, 0.5f, 1.5f)},
+    {0.2f, glm::vec3(0.5f, 1.5f, 0.5f)},
+    {0.3f, glm::vec3(1.0f, 1.0f, 1.0f)},
+};
+
 Mushroom::Mushroom(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
 {
     type = GOBJ_MUSHROOM;
@@ -20,6 +34,8 @@ Mushroom::Mushroom(btVector3 origin, btDiscreteDynamicsWorld *dyn_world)
     ghost->setWorldTransform(phys->body->getWorldTransform());
 
     dyn_world->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+
+    jump = false;
 }
 
 bool Mushroom::collide(btManifoldPoint &cp, 
@@ -32,8 +48,37 @@ bool Mushroom::collide(btManifoldPoint &cp,
     return false;
 }
 
-
 void Mushroom::update(float dt)
 {
-    UNUSED(dt);
+    static int num_frames = sizeof(frames) / sizeof(*frames);
+    if(jump)
+    {
+        float next_time = fmodf(anim_time+dt, frames[num_frames-1].time);
+        int frame_slot = 0;
+        int next_frame_slot = 0;
+        float lerp_time = 0;
+        for(int i=0; i < num_frames; i++)
+        {
+            float keyframe_time = frames[i].time;
+            if(keyframe_time <= next_time)
+            {
+                frame_slot = i;
+                next_frame_slot = (i + 1) % num_frames;
+                float next_frame_time = frames[next_frame_slot].time;
+                lerp_time = (next_time - keyframe_time) / (next_frame_time - keyframe_time); 
+            }
+        }
+
+        model->scale = glm::mix(frames[frame_slot].scale, frames[next_frame_slot].scale, lerp_time);
+
+        if(anim_time > next_time)
+        {
+            jump = false;
+            model->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+        }
+        else
+        {
+            anim_time = next_time;
+        }
+    }
 }

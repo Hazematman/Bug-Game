@@ -2,6 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "charactercontroller.hpp"
 #include "beetleBoi.cpp"
+#include "mushroom.hpp"
 
 CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm::vec3 start_pos) :
     dyn_world(dyn_world)
@@ -35,15 +36,15 @@ CharacterController::CharacterController(btDiscreteDynamicsWorld *dyn_world, glm
 
     dyn_world->addCollisionObject(ghost, btBroadphaseProxy::KinematicFilter, btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
 
-    /* Set player state */
+    // Set player state
     injump = false;
     carried = NULL;
     interact_button = false;
 
-    /* Start in summer because its the best season */
+    // Start in summer because its the best season
     season = SEASON_SUMMER;
 
-    /* Set camera position */
+    // Set camera position
     camera_pos = start_pos - glm::vec3(0.0f, -5.0f, -3.0f);
 }
 
@@ -87,15 +88,15 @@ void CharacterController::update(controller_data &data)
         phys->body->clearForces();
     }
 
-    /* Raycast to check if player is on ground */
+    // Raycast to check if player is on ground
     btVector3 check_position = player_position + btVector3(0, -4, 0);
     btCollisionWorld::ClosestRayResultCallback ray_callback(player_position, check_position);
-    /* Only check for collisions with the ground */
+    // Only check for collisions with the ground
     ray_callback.m_collisionFilterMask = 2;
     ray_callback.m_collisionFilterGroup = 2;
     dyn_world->rayTest(player_position, check_position, ray_callback);
 
-    /* Add a jump */
+    // Add a jump
     if(!injump && ray_callback.hasHit() && data.c[0].A)
     {
         btVector3 velocity = phys->body->getLinearVelocity();
@@ -106,7 +107,7 @@ void CharacterController::update(controller_data &data)
         injump = true;
     }
 
-    /* only reset injump value once the player has let go A and touched the ground */ 
+    // only reset injump value once the player has let go A and touched the ground
     if(ray_callback.hasHit() && injump && !data.c[0].A)
     {
         injump = false;
@@ -117,7 +118,7 @@ void CharacterController::update(controller_data &data)
     btVector3 fwd = t(btVector3(1.0f, 0.0f, 0.0f));
     glm::vec3 player_pos(player_position[0], player_position[1], player_position[2]);
     glm::vec3 player_fwd(fwd[0], fwd[1], fwd[2]);
-    /* Calculate camera position based on new projected position */
+    // Calculate camera position based on new projected position
     glm::vec3 new_cam_pos = player_pos - (5.0f*player_fwd + glm::vec3(0.0f, -5.0f, 0.0f));
 
     camera_pos = glm::mix(camera_pos, new_cam_pos, 0.1f);
@@ -171,14 +172,14 @@ bool CharacterController::collide(btManifoldPoint &cp,
     GameObject *gobj1 = this;
     GameObject *gobj2 = (GameObject*)obj1->getCollisionObject()->getUserPointer();
 
-    /* If either object doesn't have a user pointer exit early as
-       we only deal with collision of objects with user pointers */
+    // If either object doesn't have a user pointer exit early as
+    //   we only deal with collision of objects with user pointers
     if(gobj1 == NULL || gobj2 == NULL)
     {
         return false;
     }
 
-    /* If this is the carried object exit early */
+    // If this is the carried object exit early
     if(gobj1 == carried || gobj2 == carried)
     {
         return false;
@@ -210,20 +211,30 @@ bool CharacterController::collide(btManifoldPoint &cp,
     }
     else if(other_obj->type == GOBJ_MUSHROOM)
     {
-        btTransform &other_trans = other_obj->phys->body->getWorldTransform();
-        btVector3 &other_pos = other_trans.getOrigin();
-        btTransform &my_trans = phys->body->getWorldTransform();
-        btVector3 &my_pos = my_trans.getOrigin();
+        Mushroom *mush = (Mushroom*)other_obj;
+        
+        if(mush->jump == false)
+        {
+            btTransform &other_trans = other_obj->phys->body->getWorldTransform();
+            btVector3 &other_pos = other_trans.getOrigin();
+            btTransform &my_trans = phys->body->getWorldTransform();
+            btVector3 &my_pos = my_trans.getOrigin();
 
-        float y_size = (model->model_def->max_y - model->model_def->min_y)*model->scale.y;
-        float y_origin = model->scale.y*model->model_def->min_y + (y_size/2);
-        if(other_pos[1] < (my_pos[1]-y_origin))
-        { 
-            btVector3 velocity = phys->body->getLinearVelocity();
-            velocity.setY(20.0f);
-            phys->body->setLinearVelocity(velocity);
-            phys->body->clearForces();
-            injump = true;
+            // Calculate the position of the feet of the character and make sure the mushroom is under
+            // our feet. TODO calculate the top of the mushroom as well to make this more exact
+            float y_size = (model->model_def->max_y - model->model_def->min_y)*model->scale.y;
+            float y_origin = model->scale.y*model->model_def->min_y + (y_size/2);
+            if(other_pos[1] < (my_pos[1]-y_origin))
+            { 
+                btVector3 velocity = phys->body->getLinearVelocity();
+                velocity.setY(20.0f);
+                phys->body->setLinearVelocity(velocity);
+                phys->body->clearForces();
+                injump = true;
+
+                mush->jump = true;
+                mush->anim_time = 0.0f;
+            }
         }
     }
 

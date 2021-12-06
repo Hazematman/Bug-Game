@@ -78,6 +78,7 @@ void Model::draw(UgfxCommandBuffer &command_queue, float dt)
         } 
         else
         {
+            // If the model has no animation just draw each mesh of the model using the default transformations
             for(int i=0; i < (int)model_def->num_meshes; i++)
             {
                 glm::vec3 mesh_pos = glm::vec3(model_def->meshes[i].position[0], model_def->meshes[i].position[1], model_def->meshes[i].position[2]);
