@@ -21,7 +21,8 @@ extern "C" {
 #include "totem.hpp"
 #include "mushroom.hpp"
 
-#include "test_level_2.hpp"
+//#include "test_level_2.hpp"
+#include "arena.cpp"
 #include "snow.hpp"
 
 #include "midstream.hpp"
@@ -180,7 +181,7 @@ int main(void)
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
     dynamicsWorld->setGravity(btVector3(0, -20, 0));
 
-    PhysMesh level_mesh(test_level_2_verts, test_level_2_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
+    PhysMesh level_mesh(arena_None_verts, arena_None_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
     PhysMesh snow_mesh(snow_verts, snow_verts_length, dynamicsWorld, btVector3(0,-2,0), 3, 2);
 
     GameObject *crystal = create_crystal(dynamicsWorld);
@@ -225,7 +226,7 @@ int main(void)
 
 
     Totem totem(btVector3(-80.0f, -2.0f, -10.0f), dynamicsWorld);
-    Mushroom mush(btVector3(-40.0f, -1.0f, -12.0f), dynamicsWorld);
+    Mushroom mush(btVector3(12.0f, -1.0f, 25.0f), dynamicsWorld);
 
     /* Set bullet callback function */
     gContactAddedCallback = bulletCallback;
@@ -342,7 +343,7 @@ int main(void)
         mush.draw(disp_commands);
 
         disp_commands.push_back(ugfx_set_model_matrix(0, &level_mat_u));
-        disp_commands.push_back(ugfx_push_commands(0, test_level_2_commands, test_level_2_commands_length));
+        disp_commands.push_back(ugfx_push_commands(0, arena_None_commands, arena_None_commands_length));
 
         if(character.season == SEASON_WINTER)
             disp_commands.push_back(ugfx_push_commands(0, snow_commands, snow_commands_length));
