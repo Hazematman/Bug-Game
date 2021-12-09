@@ -400,7 +400,8 @@ int main(void)
 
         while(!dp_sync_status) {}
 
-
+        // This is just some debug info
+#if 0
         char buf[128];
         sprintf(buf, "Jump height = %f\n", character.model->position[1]);
         graphics_draw_text(disp, 20, 20, buf);
@@ -413,6 +414,7 @@ int main(void)
 
         sprintf(buf, "length %d\n", centi.length);
         graphics_draw_text(disp, 20, 50, buf);
+#endif
 
         /* Play audio again before we wait for vsync */
         play_audio();

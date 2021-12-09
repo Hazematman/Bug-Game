@@ -2,7 +2,7 @@ BUILD_DIR=build
 SOURCE_DIR=src
 include $(N64_INST)/include/n64.mk
 
-ROMNAME=ultrabrew
+ROMNAME=bug_game
 
 $(ROMNAME).z64: CXXFLAGS+=-g -std=c++14 -I$(N64_ROOTDIR)/mips64-elf/include/bullet -faligned-new
 $(ROMNAME).z64: MAPCMD=-Wl,-Map
