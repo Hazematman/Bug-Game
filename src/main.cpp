@@ -173,7 +173,11 @@ int main(void)
     data_cache_hit_writeback(&viewport, sizeof(viewport));
 
     /* Initalize bullet physics stuff */
-    btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
+    // We need to lower the default memory heap sizes to fix within the N64 memory limitations
+    btDefaultCollisionConstructionInfo constructionInfo = btDefaultCollisionConstructionInfo();
+    constructionInfo.m_defaultMaxCollisionAlgorithmPoolSize = 512;
+    constructionInfo.m_defaultMaxPersistentManifoldPoolSize = 512;
+    btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration(constructionInfo);
     btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collisionConfiguration);
     btBroadphaseInterface* overlappingPairCache = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
