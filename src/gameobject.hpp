@@ -9,6 +9,7 @@ enum GameObjectType
     GOBJ_CRYSTAL,
     GOBJ_TOTEM,
     GOBJ_MUSHROOM,
+    GOBJ_CENTI,
 };
 
 class GameObject

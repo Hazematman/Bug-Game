@@ -20,6 +20,7 @@ extern "C" {
 #include "gameobject.hpp"
 #include "totem.hpp"
 #include "mushroom.hpp"
+#include "centi.hpp"
 
 //#include "test_level_2.hpp"
 #include "arena.cpp"
@@ -224,6 +225,7 @@ int main(void)
     CharacterController character(dynamicsWorld, start_pos);
     global_character = &character;
 
+    Centi centi(dynamicsWorld, glm::vec3(0,0,0), crystal);
 
     Totem totem(btVector3(-80.0f, -2.0f, -10.0f), dynamicsWorld);
     Mushroom mush(btVector3(12.0f, -1.0f, 25.0f), dynamicsWorld);
@@ -255,6 +257,37 @@ int main(void)
     float dt = 0.16f;
     controller_data data;
     int frame = 0;
+
+
+    int fp = dfs_open("/title.spr");
+    sprite_t *title = (sprite_t*)malloc( dfs_size( fp ) );
+    dfs_read( title, 1, dfs_size( fp ), fp );
+    dfs_close( fp );
+
+    bool in_menu = true;
+
+    while(in_menu)
+    {
+        play_audio();
+
+        controller_read(&data);
+
+        if(data.c[0].start == 1)
+        {
+            in_menu = false;
+        }
+
+        while( !(disp = display_lock()) );
+
+        /*Fill the screen */
+        graphics_fill_screen( disp, 0x00000000 );
+
+        graphics_draw_sprite_trans( disp, 96, 56, title );
+
+        display_show(disp);
+    }
+
+
     while(1)
     {
         frame++;
@@ -273,11 +306,14 @@ int main(void)
         character.got_crystal = false;
         dynamicsWorld->stepSimulation(1.0f / 30.f, 10);
 
+        play_audio();
+
         controller_read(&data);
 
         character.update(data);
         totem.update(dt);
         mush.update(dt);
+        centi.update(dt);
 
         btTransform trans = cube_body->getWorldTransform();
 
@@ -349,6 +385,7 @@ int main(void)
             disp_commands.push_back(ugfx_push_commands(0, snow_commands, snow_commands_length));
 
         crystal->draw(disp_commands);
+        centi.draw(disp_commands, dt);
 
         disp_commands.push_back(ugfx_sync_full());
         disp_commands.push_back(ugfx_finalize());
@@ -373,6 +410,9 @@ int main(void)
 
         sprintf(buf, "DT %f, FPS %f", dt ,1.0f / dt);
         graphics_draw_text(disp, 20, 40, buf);
+
+        sprintf(buf, "length %d\n", centi.length);
+        graphics_draw_text(disp, 20, 50, buf);
 
         /* Play audio again before we wait for vsync */
         play_audio();

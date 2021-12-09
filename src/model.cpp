@@ -88,10 +88,10 @@ void Model::draw(UgfxCommandBuffer &command_queue, float dt)
                 glm::mat4 offset_mat = glm::translate(glm::mat4(1.0f), mesh_pos);
 
                 glm::mat4 out_mat = model_mat * rot_mat * scale * offset_mat;
-                ugfx_matrix_from_column_major(&model_def->meshes[i].matrix, &out_mat[0][0]);
-                data_cache_hit_writeback(&model_def->meshes[i].matrix, sizeof(model_def->meshes[i].matrix));
+                ugfx_matrix_from_column_major(&matrix, &out_mat[0][0]);
+                data_cache_hit_writeback(&matrix, sizeof(matrix));
 
-                command_queue.push_back(ugfx_set_model_matrix(0, &model_def->meshes[i].matrix));
+                command_queue.push_back(ugfx_set_model_matrix(0, &matrix));
                 command_queue.push_back(ugfx_push_commands(0, model_def->meshes[i].commands, model_def->meshes[i].num_commands));
                 command_queue.push_back(ugfx_sync_pipe());
             }

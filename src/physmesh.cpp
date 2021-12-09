@@ -32,7 +32,6 @@ PhysMesh::PhysMesh(ugfx_vertex_t *verticies, uint32_t num_verts, btDiscreteDynam
     dynWorld->addRigidBody(body, group, bitmask);
 }
 
-
 PhysMesh::PhysMesh(float mass, float radius, btDiscreteDynamicsWorld *dynWorld, 
                    btVector3 origin, uint32_t bitmask, uint32_t group)
 {

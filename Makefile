@@ -27,6 +27,7 @@ $(BUILD_DIR)/$(ROMNAME).dfs: \
 	filesystem/CasioSA76_Wood_C3.wav64 \
 	filesystem/CasioSA76_Sax_C3.wav64 \
 	filesystem/CasioSA76_Wood_E3.wav64 \
+	filesystem/title.spr \
 	
 $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/test_level.o \
@@ -38,6 +39,7 @@ $(BUILD_DIR)/$(ROMNAME).elf: \
 	$(BUILD_DIR)/charactercontroller.o \
 	$(BUILD_DIR)/totem.o \
 	$(BUILD_DIR)/mushroom.o \
+	$(BUILD_DIR)/centi.o \
 	$(BUILD_DIR)/main.o \
 	$(BUILD_DIR)/model.o \
 	$(BUILD_DIR)/physmesh.o \

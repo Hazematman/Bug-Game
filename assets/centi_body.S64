@@ -1,0 +1,23 @@
+/**********************************
+      Sausage64 Character Mesh
+         Script by Buu342
+            Version 1.0
+**********************************/
+
+BEGIN MESH None
+ROOT 0.0000 0.0000 0.0000
+BEGIN VERTICES
+1.0000 0.0000 0.0000 0.0000 -1.0000 0.0000 1.0000 1.0000 1.0000 1.0000 1.0000
+-1.0000 0.0000 2.0000 0.0000 -1.0000 0.0000 1.0000 1.0000 1.0000 0.0000 0.0000
+-1.0000 0.0000 0.0000 0.0000 -1.0000 0.0000 1.0000 1.0000 1.0000 0.0000 1.0000
+1.0000 0.0000 2.0000 0.0000 -1.0000 0.0000 1.0000 1.0000 1.0000 1.0000 0.0000
+END VERTICES
+BEGIN FACES
+3 0 1 2 body_top
+3 0 3 1 body_top
+END FACES
+END MESH None
+
+BEGIN ANIMATION body_bottomAction
+END ANIMATION body_bottomAction
+

@@ -137,7 +137,7 @@ def export_model(model_data, input_file, output_name):
                 for y in range(height):
                     for x in range(width):
                         r,g,b,a = image.getpixel((x,y))
-                        a = 1 if a > 0 else 1
+                        a = 1 if a > 0 else 0
                         r = convert(r, 0, 255, 0, 31)
                         g = convert(g, 0, 255, 0, 31)
                         b = convert(b, 0, 255, 0, 31)
